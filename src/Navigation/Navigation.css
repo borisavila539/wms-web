@@ -1,0 +1,90 @@
+/* Estilos para el contenedor del Dashboard */
+.dashboard-container {
+    display: flex;
+    height: 100vh;
+    background-color: #f0f2f5;
+  }
+  
+  /* Estilos para el menú lateral */
+  .sidebar {
+    width: 250px;
+    background-color: #343a40;
+    padding: 1rem;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .sidebar h3 {
+    color: #ffffff;
+    margin-bottom: 2rem;
+  }
+  
+  .sidebar ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .sidebar ul li {
+    margin-bottom: 1rem;
+  }
+  
+  .sidebar ul li a {
+    color: #cfd8dc;
+    text-decoration: none;
+    padding: 0.75rem 1rem;
+    display: block;
+    border-radius: 4px;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  
+  .sidebar ul li a:hover {
+    background-color: #495057;
+    color: #ffffff;
+  }
+  
+  .sidebar ul li a.active {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  /* Estilos para el botón hamburguesa */
+  .hamburger {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1000;
+    cursor: pointer;
+  }
+  
+  .hamburger div {
+    width: 30px;
+    height: 3px;
+    background-color: #333;
+    margin: 5px 0;
+    transition: 0.4s;
+  }
+  
+  /* Estilos para el contenido principal */
+  .main-content {
+    flex-grow: 1;
+    padding: 2rem;
+    margin-left: 250px;
+    background-color: #ffffff;
+    transition: margin-left 0.3s ease-in-out;
+  }
+  
+  .main-content.shrink {
+    margin-left: 0;
+  }
+  

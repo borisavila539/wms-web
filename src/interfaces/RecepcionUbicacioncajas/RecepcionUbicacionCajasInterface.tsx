@@ -9,7 +9,7 @@ export interface RecepcionUbicacionCajasInterface {
     fechaDeRecepcion: Date,
     color: string,
     ubicacion: string,
-    paginas:number
+    paginas: number
 }
 
 export interface RecepcionUbicacionCajasStringInterface {
@@ -23,4 +23,18 @@ export interface RecepcionUbicacionCajasStringInterface {
     fechaDeRecepcion: Date,
     color: string,
     ubicacion: string
+}
+
+export interface RecepcionUbicacionFiltro {
+
+    lote: string,
+    orden: string,
+    articulo: string,
+    talla: string,
+    color: string,
+    ubicacion: string,
+    page: number,
+    size: number,
+    tipo:string
+
 }

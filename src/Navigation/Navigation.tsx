@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Link, Route, Routes } from 'react-router-dom'
 import RecepcionUbicacionCajas from '../Screens/RecepcionUbicaiconCajas/RecepcionUbicacionCajas'
 import './Navigation.css'
+import DeclaracionEnvio from '../Screens/DeclaracionEnvio/DeclaracionEnvio'
 
 export const Navigation = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -16,6 +17,8 @@ export const Navigation = () => {
         <h3 style={{textAlign: 'center'}}>WMS</h3>
         <ul>
           <li><Link to="RecepcionUbicacionCajas" >Recepcion ubicacion cajas</Link></li>
+          <li><Link to="DeclaracionEnvio" >Declaracion Envio</Link></li>
+
           {/* Agrega más enlaces según sea necesario */}
         </ul>
       </div>
@@ -28,6 +31,8 @@ export const Navigation = () => {
         <Routes>
           <Route path="" element={<RecepcionUbicacionCajas />} />
           <Route path="RecepcionUbicacionCajas" element={<RecepcionUbicacionCajas />} />
+          <Route path="DeclaracionEnvio" element={<DeclaracionEnvio />} />
+
           {/* Agrega más rutas según los módulos */}
         </Routes>
       </div>

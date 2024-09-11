@@ -22,6 +22,8 @@ const DeclaracionEnvio = () => {
     const [ubicacion, setubicacion] = useState<string>('')
     const [albaran, setalbaran] = useState<string>('')
     const [factura, setfactura] = useState<string>('')
+    const [fecha, setfecha] = useState<string>('')
+
 
 
     const [totalPages, setTotalPages] = useState<number>(1)
@@ -50,7 +52,8 @@ const DeclaracionEnvio = () => {
                 ubicacion,
                 factura,
                 page,
-                size: 50
+                size: 50,
+                fecha
 
             }
             await WmSApi.post<DeclaracionEnvioninterface[]>(`DeclaracionEnvio`, filtro)
@@ -66,36 +69,18 @@ const DeclaracionEnvio = () => {
 
     const handleDownload = async () => {
         setDescargando(true)
-        let datos: DeclaracionEnvioninterface[] = []
+
         try {
-            let filtro: DeclaracionEnvioFiltro = {
-                caja,
-                pais,
-                cuentaCliente,
-                nombreCliente,
-                pedidoVenta,
-                listaEmpaque,
-                albaran,
-                ubicacion,
-                factura,
-                page,
-                size: 200000
-
-            }
-            await WmSApi.post<DeclaracionEnvioninterface[]>(`DeclaracionEnvio`, filtro).then(resp => {
-                datos = resp.data
+            await WmSApi.get(`DeclaracionEnvio/${pais}/${ubicacion}/${fecha}`, {
+                responseType: 'blob'
+            }).then(resp => {
+                const url = window.URL.createObjectURL(new Blob([resp.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', 'Declaracion Envio.xlsx'); 
+                link.click();
+                document.body.removeChild(link);
             })
-            // Convertir el JSON en una hoja de cálculo
-            const worksheet = XLSX.utils.json_to_sheet(datos);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'Datos');
-
-            // Generar el archivo de Excel y crear un Blob
-            const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-            const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-
-            // Usar file-saver para descargar el archivo
-            saveAs(blob, 'Delcaracion Envio.xlsx');
         } catch (err) {
 
         }
@@ -192,7 +177,7 @@ const DeclaracionEnvio = () => {
     return (
         <div>
             <h2 style={{ textAlign: 'center' }}>Declaracion Envio</h2>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px', gap: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px', gap: '10px' }}>
                 <div>
                     <label htmlFor="caja" style={{ marginRight: '10px' }}>Caja:</label>
                     <input
@@ -329,6 +314,21 @@ const DeclaracionEnvio = () => {
                     />
                 </div>
                 <div>
+                    <label htmlFor="fecha" style={{ marginRight: '10px' }}>Fecha:</label>
+                    <input
+                        type="text"
+                        id="fecha"
+                        value={fecha}
+                        onChange={(e) => setfecha(e.target.value)}
+                        style={{
+                            padding: '8px',
+                            border: '1px solid #ccc',
+                            borderRadius: '4px',
+                            width: '100px',
+                        }}
+                    />
+                </div>
+                <div>
                     <label htmlFor="page" style={{ marginRight: '10px' }}>Pagina:</label>
                     <input
                         type="number"
@@ -403,6 +403,12 @@ const DeclaracionEnvio = () => {
                     Descargar
                 </button>
             </div>
+            {
+                data.length > 0 &&
+                <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '10px', gap: '10px' }}>
+                    <p><strong>Total Cajas:</strong> {data[0].cajas.toString()} <strong>Totalunidades:</strong> {data[0].unidades.toString()}</p>
+                </div>
+            }
             <table {...getTableProps()} style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                     {headerGroups.map(headerGroup => (

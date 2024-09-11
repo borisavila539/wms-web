@@ -15,7 +15,9 @@ export interface DeclaracionEnvioninterface{
     calle: string,
     ciudad: string,
     departamento: string,
-    paginas:number
+    paginas:number,
+    unidades:number,
+    cajas:number
   }
 export interface DeclaracionEnvioFiltro{
     caja: string,
@@ -28,5 +30,6 @@ export interface DeclaracionEnvioFiltro{
     ubicacion: string,
     factura: string,
     page: number,
-    size: number
+    size: number,
+    fecha:string
   }

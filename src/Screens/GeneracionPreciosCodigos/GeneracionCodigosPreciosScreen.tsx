@@ -55,6 +55,10 @@ const GeneracionCodigosPreciosScreen = () => {
                 accessor: 'cuentaCliente',
             },
             {
+                Header: 'Pedido Venta',
+                accessor: 'pedido',
+            },
+            {
                 Header: 'Codigo barra',
                 accessor: 'codigoBarra',
             },
@@ -149,7 +153,7 @@ const GeneracionCodigosPreciosScreen = () => {
                             padding: '8px',
                             border: '1px solid #ccc',
                             borderRadius: '4px',
-                            width: '100px',
+                            width: '450px',
                         }}
                     />
                 </div>

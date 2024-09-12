@@ -1,4 +1,5 @@
 export interface GeneracionPrecioCodigoInterface {
+  pedido:string,
   cuentaCliente: string,
   codigoBarra: string,
   articulo: string,

@@ -6,6 +6,7 @@ import DeclaracionEnvio from '../Screens/DeclaracionEnvio/DeclaracionEnvio'
 import ControlCajasEtiquetas from '../Screens/ControlCajasEtiquetas/ControlCajasEtiquetas'
 import GeneracionCodigosPreciosScreen from '../Screens/GeneracionPreciosCodigos/GeneracionCodigosPreciosScreen'
 import ConfiguracionPrecioCodigosScreen from '../Screens/GeneracionPreciosCodigos/ConfiguracionPrecioCodigosScreen'
+import ImpresionEtiquetaPreciosScreen from '../Screens/GeneracionPreciosCodigos/ImpresionEtiquetaPreciosScreen'
 
 export const Navigation = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -49,6 +50,15 @@ export const Navigation = () => {
                     </li>
                     <li>
                         <Link
+                            to="EtiquetaPrecio"
+                            onClick={toggleSidebar}
+                            className={location.pathname === '/Menu/EtiquetaPrecio' ? 'active' : ''}
+                        >
+                            Impresion Etiquetas Precio
+                        </Link>
+                    </li>
+                    <li>
+                        <Link
                             to="GeneracionCodigoPrecio"
                             onClick={toggleSidebar}
                             className={location.pathname === '/Menu/GeneracionCodigoPrecio' ? 'active' : ''}
@@ -80,6 +90,7 @@ export const Navigation = () => {
                     <Route path="ControlCajasEtiquetado" element={<ControlCajasEtiquetas />} />
                     <Route path="GeneracionCodigoPrecio" element={<GeneracionCodigosPreciosScreen />} />
                     <Route path="ConfiguracionPrecioCodigos" element={<ConfiguracionPrecioCodigosScreen />} />
+                    <Route path="EtiquetaPrecio" element={<ImpresionEtiquetaPreciosScreen />} />
                 </Routes>
             </div>
         </div>

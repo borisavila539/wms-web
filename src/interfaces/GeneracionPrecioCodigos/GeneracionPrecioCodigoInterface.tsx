@@ -27,3 +27,15 @@ export interface ConfiguracionPrecioCodigosinterface {
   costo: number,
   precio: number
 }
+
+export interface ImpresionEtiquetaPrecio{
+  nombre: string,
+  codigoBarra: string,
+  articulo: string,
+  descripcion: string,
+  estilo: string,
+  talla: string,
+  idColor: string,
+  precio: number,
+  qty: number
+}

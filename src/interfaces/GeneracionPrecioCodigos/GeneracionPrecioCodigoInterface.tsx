@@ -37,5 +37,13 @@ export interface ImpresionEtiquetaPrecio{
   talla: string,
   idColor: string,
   precio: number,
-  qty: number
+  qty: number,
+  imiB_BOXCODE:string
+}
+
+export interface ClientesGeneracionPrecio{
+  cuentaCliente: string,
+  nombre: string,
+  moneda: string,
+  decimal: boolean
 }

@@ -1,19 +1,25 @@
-import React, { useState } from 'react'
-import { Link, Route, Routes, useLocation } from 'react-router-dom'
-import RecepcionUbicacionCajas from '../Screens/RecepcionUbicaiconCajas/RecepcionUbicacionCajas'
-import './Navigation.css'
-import DeclaracionEnvio from '../Screens/DeclaracionEnvio/DeclaracionEnvio'
-import ControlCajasEtiquetas from '../Screens/ControlCajasEtiquetas/ControlCajasEtiquetas'
-import GeneracionCodigosPreciosScreen from '../Screens/GeneracionPreciosCodigos/GeneracionCodigosPreciosScreen'
-import ConfiguracionPrecioCodigosScreen from '../Screens/GeneracionPreciosCodigos/ConfiguracionPrecioCodigosScreen'
-import ImpresionEtiquetaPreciosScreen from '../Screens/GeneracionPreciosCodigos/ImpresionEtiquetaPreciosScreen'
+import React, { useState } from 'react';
+import { Link, Route, Routes, useLocation } from 'react-router-dom';
+import RecepcionUbicacionCajas from '../Screens/RecepcionUbicaiconCajas/RecepcionUbicacionCajas';
+import DeclaracionEnvio from '../Screens/DeclaracionEnvio/DeclaracionEnvio';
+import ControlCajasEtiquetas from '../Screens/ControlCajasEtiquetas/ControlCajasEtiquetas';
+import GeneracionCodigosPreciosScreen from '../Screens/GeneracionPreciosCodigos/GeneracionCodigosPreciosScreen';
+import ConfiguracionPrecioCodigosScreen from '../Screens/GeneracionPreciosCodigos/ConfiguracionPrecioCodigosScreen';
+import ImpresionEtiquetaPreciosScreen from '../Screens/GeneracionPreciosCodigos/ImpresionEtiquetaPreciosScreen';
+import ClientesGeneracionPreciosScreen from '../Screens/GeneracionPreciosCodigos/ClientesGeneracionPreciosScreen';
+import './Navigation.css';
 
 export const Navigation = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
-    const location = useLocation(); // Hook para obtener la ruta actual
+    const [isSubMenuOpen, setSubMenuOpen] = useState(false); // Estado para el submenú
+    const location = useLocation();
 
     const toggleSidebar = () => {
         setSidebarOpen(!isSidebarOpen);
+    };
+
+    const toggleSubMenu = () => {
+        setSubMenuOpen(!isSubMenuOpen); // Alternar la visibilidad del submenú
     };
 
     return (
@@ -48,33 +54,49 @@ export const Navigation = () => {
                             Control Cajas Etiquetado
                         </Link>
                     </li>
-                    <li>
-                        <Link
-                            to="EtiquetaPrecio"
-                            onClick={toggleSidebar}
-                            className={location.pathname === '/Menu/EtiquetaPrecio' ? 'active' : ''}
-                        >
-                            Impresion Etiquetas Precio
-                        </Link>
+                    <li onClick={toggleSubMenu} style={{ cursor: 'pointer' }}>
+                        <span>Generacion Precios y Codigos</span>
                     </li>
-                    <li>
-                        <Link
-                            to="GeneracionCodigoPrecio"
-                            onClick={toggleSidebar}
-                            className={location.pathname === '/Menu/GeneracionCodigoPrecio' ? 'active' : ''}
-                        >
-                            Plantilla Creacion Articulo
-                        </Link>
-                    </li>
-                    <li>
-                        <Link
-                            to="ConfiguracionPrecioCodigos"
-                            onClick={toggleSidebar}
-                            className={location.pathname === '/Menu/ConfiguracionPrecioCodigos' ? 'active' : ''}
-                        >
-                            Configuracion Precios Codigos
-                        </Link>
-                    </li>
+                    {isSubMenuOpen && ( // Si el submenú está abierto, mostrar los enlaces
+                        <ul>
+                            <li>
+                                <Link
+                                    to="EtiquetaPrecio"
+                                    onClick={toggleSidebar}
+                                    className={location.pathname === '/Menu/EtiquetaPrecio' ? 'active' : ''}
+                                >
+                                    Impresion Etiquetas Precio
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    to="GeneracionCodigoPrecio"
+                                    onClick={toggleSidebar}
+                                    className={location.pathname === '/Menu/GeneracionCodigoPrecio' ? 'active' : ''}
+                                >
+                                    Plantilla Creacion Articulo
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    to="ConfiguracionPrecioCodigos"
+                                    onClick={toggleSidebar}
+                                    className={location.pathname === '/Menu/ConfiguracionPrecioCodigos' ? 'active' : ''}
+                                >
+                                    Configuracion Precios Codigos
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    to="ClientesgeneracionPrecio"
+                                    onClick={toggleSidebar}
+                                    className={location.pathname === '/Menu/ClientesgeneracionPrecio' ? 'active' : ''}
+                                >
+                                    Clientes Generacion Precio
+                                </Link>
+                            </li>
+                        </ul>
+                    )}
                 </ul>
             </div>
             <div className={`main-content ${isSidebarOpen ? '' : 'shrink'}`}>
@@ -91,6 +113,7 @@ export const Navigation = () => {
                     <Route path="GeneracionCodigoPrecio" element={<GeneracionCodigosPreciosScreen />} />
                     <Route path="ConfiguracionPrecioCodigos" element={<ConfiguracionPrecioCodigosScreen />} />
                     <Route path="EtiquetaPrecio" element={<ImpresionEtiquetaPreciosScreen />} />
+                    <Route path="ClientesgeneracionPrecio" element={<ClientesGeneracionPreciosScreen />} />
                 </Routes>
             </div>
         </div>

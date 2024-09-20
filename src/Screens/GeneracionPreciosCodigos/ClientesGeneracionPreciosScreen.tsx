@@ -1,26 +1,25 @@
 
-
 import React, { useEffect, useMemo, useState } from 'react'
 import { WmSApi } from '../../api/WMSapi'
 import { useTable, Column } from 'react-table';
-import { ImpresionEtiquetaPrecio } from '../../interfaces/GeneracionPrecioCodigos/GeneracionPrecioCodigoInterface';
+import { ClientesGeneracionPrecio, ImpresionEtiquetaPrecio } from '../../interfaces/GeneracionPrecioCodigos/GeneracionPrecioCodigoInterface';
 
-const ImpresionEtiquetaPreciosScreen = () => {
-    const [data, setData] = useState<ImpresionEtiquetaPrecio[]>([])
+const ClientesGeneracionPreciosScreen = () => {
+    const [data, setData] = useState<ClientesGeneracionPrecio[]>([])
     const [cargando, setCargando] = useState<boolean>(false)
-    const [imprimiendo, setimprimiendo] = useState<boolean>(false)
+    const [edit, setEdit] = useState<boolean>(false)
+    const [Enviando, setEnviando] = useState<boolean>(false)
+    const [cuentaCliente, setCuentaCliente] = useState<string>('')
+    const [nombre, setNombre] = useState<string>('')
+    const [moneda, setMoneda] = useState<string>('')
+    const [decimal, setDecimal] = useState<boolean>(false)
 
-    const [pedido,setPedido] = useState<string>('')
-    const [ruta,setRuta] = useState<string>('')
-    const [caja,setcaja] = useState<string>('')
-    const [fecha,setfecha] = useState<string>('')
 
 
-    
     const getData = async () => {
         setCargando(true)
         try {
-            await WmSApi.get<ImpresionEtiquetaPrecio[]>(`ImpresionPrecioCodigos/${pedido != '' ? pedido : '-'}/${ruta != '' ? ruta : '-'}/${caja != '' ? caja : '-'}`)
+            await WmSApi.get<ClientesGeneracionPrecio[]>(`ObtenerClientesGeneracionPrecio`)
                 .then(resp => {
                     setData(resp.data)
                 })
@@ -30,70 +29,94 @@ const ImpresionEtiquetaPreciosScreen = () => {
         setCargando(false)
     }
 
-    const imprimir = async () => {
-        setimprimiendo(true)
+    const getEnviar = async () => {
+        setEnviando(true)
         try {
-            await WmSApi.get<string>(`ImpresionPrecioCodigos/${pedido != '' ? pedido : '-'}/${ruta != '' ? ruta : '-'}/${caja != '' ? caja : '-'}/${fecha != '' ? fecha : '-'}`)
+            let tmp: ClientesGeneracionPrecio = {
+                cuentaCliente,
+                nombre,
+                moneda,
+                decimal
+
+            }
+            await WmSApi.post<ClientesGeneracionPrecio>(`ClientesGeneracionPrecio`, tmp)
                 .then(resp => {
-                    if(resp.data != "OK"){
-                        alert(resp.data);
+                    if (resp.data.cuentaCliente != '') {
+                        getData()
+                        Limpiar()
                     }
                 })
         } catch (err) {
             console.log(err)
         }
-        setimprimiendo(false)
+        setEnviando(false)
     }
-
 
     const Limpiar = () => {
-        setPedido('')
-        setRuta('')
-        setcaja('')
+        setCuentaCliente('')
+        setNombre('')
+        setMoneda('')
+        setDecimal(false)
+        setEdit(false)
     }
 
-    const columns: Column<ImpresionEtiquetaPrecio>[] = useMemo(
+    const handleModificar = (row: ClientesGeneracionPrecio) => {
+        setCuentaCliente(row.cuentaCliente)
+        setNombre(row.nombre)
+        setMoneda(row.moneda)
+        setDecimal(row.decimal)
+        setEdit(true)
+
+    };
+    const columns: Column<ClientesGeneracionPrecio>[] = useMemo(
         () => [
             {
-                Header: 'Cliente',
+                Header: 'Cuenta Cliente',
+                accessor: 'cuentaCliente',
+            },
+            {
+                Header: 'Nombre',
                 accessor: 'nombre',
             },
             {
-                Header: 'Caja',
-                accessor: 'imiB_BOXCODE',
+                Header: 'Moneda',
+                accessor: 'moneda',
             },
             {
-                Header: 'Codigo Barra',
-                accessor: 'codigoBarra',
+                Header: 'Decimal',
+                accessor: 'decimal',
+                Cell: ({ row }: { row: { original: ClientesGeneracionPrecio } }) => (
+                    <div>
+                        <input
+                            type="checkbox"
+                            checked={row.original.decimal}
+                            style={{ marginRight: '10px' }}
+                        />
+                    </div>
+                )
             },
             {
-                Header: 'Articulo',
-                accessor: 'articulo',
-            },
-            {
-                Header: 'Descripcion',
-                accessor: 'descripcion',
-            },
-            {
-                Header: 'Estilo',
-                accessor: 'estilo',
-            },
-            {
-                Header: 'Talla',
-                accessor: 'talla',
-            },
-            {
-                Header: 'Color',
-                accessor: 'idColor',
-            },
-            {
-                Header: 'Precio',
-                accessor: 'precio',
-            },
-            {
-                Header: 'Cantidad',
-                accessor: 'qty',
-            },
+                Header: 'Acciones',
+                Cell: ({ row }: { row: { original: ClientesGeneracionPrecio } }) => (
+                    <div>
+                        <button
+                            onClick={() => handleModificar(row.original)}
+                            style={{
+                                padding: '6px 12px',
+                                backgroundColor: '#007bff',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                marginRight: '8px',
+
+                            }}
+                        >
+                            Modificar
+                        </button>
+                    </div>
+                )
+            }
         ], []
     )
 
@@ -110,48 +133,39 @@ const ImpresionEtiquetaPreciosScreen = () => {
         }
     );
 
+    useEffect(() => {
+        getData()
+    }, [])
     return (
         <div>
-            <h2 style={{ textAlign: 'center' }}>Configuracion Precios Codigos</h2>
+            <h2 style={{ textAlign: 'center' }}>Clientes</h2>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px', gap: '10px' }}>
+
                 <div>
-                    <label htmlFor="Pedido" style={{ marginRight: '10px' }}>Pedido:</label>
+                    <label htmlFor="cuentaCliente" style={{ marginRight: '10px' }}>Cuenta Cliente:</label>
                     <input
+
                         type="text"
-                        id="pedido"
-                        value={pedido}
-                        onChange={(e) => setPedido(e.target.value)}
+                        id="cuentaCliente"
+                        value={cuentaCliente}
+                        onChange={(e) => setCuentaCliente(e.target.value)}
                         style={{
                             padding: '8px',
                             border: '1px solid #ccc',
                             borderRadius: '4px',
                             width: '100px',
                         }}
+                        disabled={edit}
                     />
                 </div>
-                
+
                 <div>
-                    <label htmlFor="Ruta" style={{ marginRight: '10px' }}>Ruta:</label>
+                    <label htmlFor="Nombre" style={{ marginRight: '10px' }}>Nombre:</label>
                     <input
                         type="text"
-                        id="Ruta"
-                        value={ruta}
-                        onChange={(e) => setRuta(e.target.value)}
-                        style={{
-                            padding: '8px',
-                            border: '1px solid #ccc',
-                            borderRadius: '4px',
-                            width: '100px',
-                        }}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="Caja" style={{ marginRight: '10px' }}>Caja:</label>
-                    <input
-                        type="text"
-                        id="Caja"
-                        value={caja}
-                        onChange={(e) => setcaja(e.target.value)}
+                        id="Nombre"
+                        value={nombre}
+                        onChange={(e) => setNombre(e.target.value)}
                         style={{
                             padding: '8px',
                             border: '1px solid #ccc',
@@ -161,12 +175,12 @@ const ImpresionEtiquetaPreciosScreen = () => {
                     />
                 </div>
                 <div>
-                    <label htmlFor="Fecha" style={{ marginRight: '10px' }}>Fecha:</label>
+                    <label htmlFor="Moneda" style={{ marginRight: '10px' }}>Moneda:</label>
                     <input
                         type="text"
-                        id="Fecha"
-                        value={fecha}
-                        onChange={(e) => setfecha(e.target.value)}
+                        id="Moneda"
+                        value={moneda}
+                        onChange={(e) => setMoneda(e.target.value)}
                         style={{
                             padding: '8px',
                             border: '1px solid #ccc',
@@ -175,6 +189,41 @@ const ImpresionEtiquetaPreciosScreen = () => {
                         }}
                     />
                 </div>
+                <div style={{ padding: '10px' }}>
+                    <label>
+                        <input
+                            type="checkbox"
+                            checked={decimal}
+                            onChange={() => setDecimal(!decimal)}
+                            style={{ marginRight: '10px' }}
+                        />
+                        Decimal
+                    </label>
+                </div>
+                {
+                    cuentaCliente != '' && nombre != '' &&
+                    <button
+                        onClick={() => {
+
+                            getEnviar()
+                        }}
+                        style={{
+                            padding: '8px 16px',
+                            border: 'none',
+                            borderRadius: '4px',
+                            backgroundColor: '#007bff',
+                            color: 'white',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                        disabled={Enviando}
+                    >
+                        Agregar/Modificar
+                    </button>
+                }
+
                 <button
                     onClick={() => {
                         getData()
@@ -192,7 +241,7 @@ const ImpresionEtiquetaPreciosScreen = () => {
                         justifyContent: 'center'
                     }}
                 >
-                    Buscar
+                    Actualizar
                 </button>
                 <button
                     onClick={() => {
@@ -214,28 +263,9 @@ const ImpresionEtiquetaPreciosScreen = () => {
                     Limpiar
                 </button>
 
-                <button
-                    onClick={() => {
 
-                        imprimir()
-                    }}
-                    style={{
-                        padding: '8px 16px',
-                        border: 'none',
-                        borderRadius: '4px',
-                        backgroundColor: imprimiendo ? '#ccc' : '#007bff',
-                        color: 'white',
-                        cursor: imprimiendo ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}
-                    disabled = {imprimiendo}
-                >
-                    Imprimir
-                </button>
-                
-                
+
+
 
             </div>
 
@@ -267,7 +297,7 @@ const ImpresionEtiquetaPreciosScreen = () => {
                                     {row.cells.map(cell => (
                                         <td
                                             {...cell.getCellProps()}
-                                            style={{ padding: '10px', border: 'solid 1px gray' }}
+                                            style={{ padding: '10px', border: 'solid 1px gray', textAlign: 'center' }}
                                         >
                                             {cell.render('Cell')}
                                         </td>
@@ -282,5 +312,5 @@ const ImpresionEtiquetaPreciosScreen = () => {
     )
 }
 
-export default ImpresionEtiquetaPreciosScreen;
+export default ClientesGeneracionPreciosScreen;
 

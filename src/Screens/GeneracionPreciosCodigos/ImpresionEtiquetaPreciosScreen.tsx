@@ -4,19 +4,34 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { WmSApi } from '../../api/WMSapi'
 import { useTable, Column } from 'react-table';
 import { ImpresionEtiquetaPrecio } from '../../interfaces/GeneracionPrecioCodigos/GeneracionPrecioCodigoInterface';
+import { ImpresorasInterface } from '../../interfaces/ImpresorasInterface';
 
 const ImpresionEtiquetaPreciosScreen = () => {
     const [data, setData] = useState<ImpresionEtiquetaPrecio[]>([])
     const [cargando, setCargando] = useState<boolean>(false)
     const [imprimiendo, setimprimiendo] = useState<boolean>(false)
 
-    const [pedido,setPedido] = useState<string>('')
-    const [ruta,setRuta] = useState<string>('')
-    const [caja,setcaja] = useState<string>('')
-    const [fecha,setfecha] = useState<string>('')
+    const [pedido, setPedido] = useState<string>('')
+    const [ruta, setRuta] = useState<string>('')
+    const [caja, setcaja] = useState<string>('')
+    const [fecha, setfecha] = useState<string>('')
+
+    const [impresoras, setimpresoras] = useState<ImpresorasInterface[]>([])
+    const [impresora, setimpresora] = useState<string>('10.1.1.114')
 
 
-    
+
+    const getImpresoras = async () => {
+        try {
+            await WmSApi.get<ImpresorasInterface[]>('Impresoras').then(resp => {
+                setimpresoras(resp.data)
+                setimpresora(resp.data[0].iM_IPPRINTER)
+            })
+        } catch (err) {
+
+        }
+    }
+
     const getData = async () => {
         setCargando(true)
         try {
@@ -33,9 +48,9 @@ const ImpresionEtiquetaPreciosScreen = () => {
     const imprimir = async () => {
         setimprimiendo(true)
         try {
-            await WmSApi.get<string>(`ImpresionPrecioCodigos/${pedido != '' ? pedido : '-'}/${ruta != '' ? ruta : '-'}/${caja != '' ? caja : '-'}/${fecha != '' ? fecha : '-'}`)
+            await WmSApi.get<string>(`ImpresionPrecioCodigos/${pedido != '' ? pedido : '-'}/${ruta != '' ? ruta : '-'}/${caja != '' ? caja : '-'}/${fecha != '' ? fecha : '-'}/${impresora}`)
                 .then(resp => {
-                    if(resp.data != "OK"){
+                    if (resp.data != "OK") {
                         alert(resp.data);
                     }
                 })
@@ -110,6 +125,10 @@ const ImpresionEtiquetaPreciosScreen = () => {
         }
     );
 
+    useEffect(() => {
+        getImpresoras()
+    }, [])
+
     return (
         <div>
             <h2 style={{ textAlign: 'center' }}>Configuracion Precios Codigos</h2>
@@ -129,7 +148,7 @@ const ImpresionEtiquetaPreciosScreen = () => {
                         }}
                     />
                 </div>
-                
+
                 <div>
                     <label htmlFor="Ruta" style={{ marginRight: '10px' }}>Ruta:</label>
                     <input
@@ -213,7 +232,6 @@ const ImpresionEtiquetaPreciosScreen = () => {
                 >
                     Limpiar
                 </button>
-
                 <button
                     onClick={() => {
 
@@ -230,13 +248,21 @@ const ImpresionEtiquetaPreciosScreen = () => {
                         alignItems: 'center',
                         justifyContent: 'center'
                     }}
-                    disabled = {imprimiendo}
+                    disabled={imprimiendo}
                 >
                     Imprimir
                 </button>
-                
-                
+                <div>
 
+                    <select name="impresora" id="impresora" onChange={(e) => setimpresora(e.target.value)}>
+                        {impresoras.map((impresora) => (
+                            <option key={impresora.iM_IPPRINTER} value={impresora.iM_IPPRINTER}>
+                                {impresora.iM_DESCRIPTION_PRINTER}
+                            </option>
+                        ))}
+                    </select>
+
+                </div>
             </div>
 
             <table {...getTableProps()} style={{ width: '100%', borderCollapse: 'collapse' }}>

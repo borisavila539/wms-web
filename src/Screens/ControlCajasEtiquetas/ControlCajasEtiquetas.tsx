@@ -18,6 +18,7 @@ const ControlCajasEtiquetas = () => {
     const [Lote, setlote] = useState<string>('')
     const [Empleado, setEmpleado] = useState<string>('')
     const [totalPages, setTotalPages] = useState<number>(1)
+    const [fecha,setFecha] = useState<string>('')
 
     const getData = async () => {
         setCargando(true)
@@ -29,7 +30,8 @@ const ControlCajasEtiquetas = () => {
                 lote: Lote,
                 empleado: Empleado,
                 page,
-                size: 50
+                size: 50,
+                fecha
             }
             await WmSApi.post<ControlCajasEtiquetadoDetalleInterface[]>('ControlCajasEtiquetado', filtro).then(resp => {
                 //setData(resp.data)
@@ -61,7 +63,8 @@ const ControlCajasEtiquetas = () => {
                 lote: Lote,
                 empleado: Empleado,
                 page,
-                size: 200000
+                size: 200000,
+                fecha
             }
             await WmSApi.post<ControlCajasEtiquetadoDetalleInterface[]>('ControlCajasEtiquetado', filtro).then(resp => {
                 datos = resp.data
@@ -221,6 +224,21 @@ const ControlCajasEtiquetas = () => {
                         id="empleado"
                         value={Empleado}
                         onChange={(e) => setEmpleado(e.target.value)}
+                        style={{
+                            padding: '8px',
+                            border: '1px solid #ccc',
+                            borderRadius: '4px',
+                            width: '100px',
+                        }}
+                    />
+                </div>
+                <div>
+                    <label htmlFor="fecha" style={{ marginRight: '10px' }}>Fecha:</label>
+                    <input
+                        type="text"
+                        id="fecha"
+                        value={fecha}
+                        onChange={(e) => setFecha(e.target.value)}
                         style={{
                             padding: '8px',
                             border: '1px solid #ccc',

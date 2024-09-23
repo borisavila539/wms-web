@@ -5,7 +5,8 @@ export interface ControlCajaEtiquetadoFiltro {
     lote: string,
     empleado: string,
     page: number,
-    size: number
+    size: number,
+    fecha:string
 }
 
 export interface ControlCajasEtiquetadoDetalleInterface {

@@ -8,6 +8,7 @@ import ConfiguracionPrecioCodigosScreen from '../Screens/GeneracionPreciosCodigo
 import ImpresionEtiquetaPreciosScreen from '../Screens/GeneracionPreciosCodigos/ImpresionEtiquetaPreciosScreen';
 import ClientesGeneracionPreciosScreen from '../Screens/GeneracionPreciosCodigos/ClientesGeneracionPreciosScreen';
 import './Navigation.css';
+import TrackingPedidosScreen from '../Screens/TrackingPedidos/TrackingPedidosScreen';
 
 export const Navigation = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -97,6 +98,15 @@ export const Navigation = () => {
                             </li>
                         </ul>
                     )}
+                    <li>
+                        <Link
+                            to="TrackingPedidos"
+                            onClick={toggleSidebar}
+                            className={location.pathname === '/Menu/TrackingPedidos' ? 'active' : ''}
+                        >
+                            Tracking Pedidos
+                        </Link>
+                    </li>
                 </ul>
             </div>
             <div className={`main-content ${isSidebarOpen ? '' : 'shrink'}`}>
@@ -114,6 +124,8 @@ export const Navigation = () => {
                     <Route path="ConfiguracionPrecioCodigos" element={<ConfiguracionPrecioCodigosScreen />} />
                     <Route path="EtiquetaPrecio" element={<ImpresionEtiquetaPreciosScreen />} />
                     <Route path="ClientesgeneracionPrecio" element={<ClientesGeneracionPreciosScreen />} />
+                    <Route path="TrackingPedidos" element={<TrackingPedidosScreen />} />
+
                 </Routes>
             </div>
         </div>

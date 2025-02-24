@@ -21,15 +21,21 @@ const RecepcionUbicacionCajas = () => {
   const [talla, setTalla] = useState<string>('')
   const [ubicacion, setUbicacion] = useState<string>('')
   const [color, setColor] = useState<string>('')
-  const [tipo, setTipo] = useState<boolean>(true)
+  //const [tipo, setTipo] = useState<boolean>(true)
+  const [Tipo, setTipo] = useState<{ key: string, value: string }[]>(
+    [
+      { key: 'DENIM', value: 'DENIM' },
+      { key: 'TP', value: 'TP' },
+      { key: 'MB', value: 'MB' }
+    ])
 
   const [totalPages, setTotalPages] = useState<number>(1)
-
+  const [tiposelected, settiposelected] = useState<string>('DENIM')
   const sync = async () => {
     setSincronizando(true)
     try {
 
-      await WmSApi.get<RecepcionUbicacionCajasInterface[]>(`RecepcionUbicacionCajasSync/${tipo ? "DENIM" : "TP"}`)
+      await WmSApi.get<RecepcionUbicacionCajasInterface[]>(`RecepcionUbicacionCajasSync/${tiposelected}`)
     } catch (err) {
 
     }
@@ -47,7 +53,7 @@ const RecepcionUbicacionCajas = () => {
         ubicacion,
         page,
         size: 50,
-        tipo: tipo ? "DENIM" : "TP"
+        tipo: tiposelected
       }
       await WmSApi.post<RecepcionUbicacionCajasInterface[]>(`RecepcionUbicacionCajas`, filtro)
         .then(resp => {
@@ -73,7 +79,7 @@ const RecepcionUbicacionCajas = () => {
         ubicacion,
         page,
         size: 200000,
-        tipo: tipo ? "DENIM" : "TP"
+        tipo: tiposelected
 
       }
       await WmSApi.post<RecepcionUbicacionCajasInterface[]>(`RecepcionUbicacionCajas`, filtro).then(resp => {
@@ -165,13 +171,19 @@ const RecepcionUbicacionCajas = () => {
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px', gap: '10px' }}>
         <div style={{ padding: '20px' }}>
           <label>
-            <input
-              type="checkbox"
-              checked={tipo}
-              onChange={() => setTipo(!tipo)}
-              style={{ marginRight: '10px' }}
-            />
-            {tipo ? 'DENIM' : 'TP'}
+            <select
+              name='Tipo'
+              value={tiposelected}
+              onChange={(val) => settiposelected(val.target.value)}
+            >
+              {Tipo.map(element => {
+
+                return (
+                  <option value={element.value}>{element.value}</option>
+                )
+              })}
+            </select>
+
           </label>
         </div>
         <div>

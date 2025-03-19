@@ -104,6 +104,19 @@ const RecepcionUbicacionCajas = () => {
     setDescargando(false)
   };
 
+  const abrir = () => {
+    const element = document.createElement('a')
+    element.target = '_blank'
+    element.href = 'http://10.100.2.17:8090/'
+    document.body.appendChild(element)
+
+    if(element){
+      element.click()
+    }
+
+    document.body.removeChild(element)
+  }
+
   const columns: Column<RecepcionUbicacionCajasInterface>[] = useMemo(
     () => [
       {
@@ -299,7 +312,26 @@ const RecepcionUbicacionCajas = () => {
           />
           <span>/{totalPages + 1}</span>
         </div>
-
+        {
+          tiposelected == 'MB' &&
+          <button
+            onClick={abrir}
+            disabled={sincronizando}
+            style={{
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '4px',
+              backgroundColor: sincronizando ? '#ccc' : '#007bff',
+              color: 'white',
+              cursor: sincronizando ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            Despacho MB
+          </button>
+        }
 
         <button
           onClick={() => {
@@ -322,23 +354,29 @@ const RecepcionUbicacionCajas = () => {
         >
           Actualizar
         </button>
-        <button
-          onClick={sync}
-          disabled={sincronizando}
-          style={{
-            padding: '8px 16px',
-            border: 'none',
-            borderRadius: '4px',
-            backgroundColor: sincronizando ? '#ccc' : '#007bff',
-            color: 'white',
-            cursor: sincronizando ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          Sincronizar
-        </button>
+        {
+          tiposelected != 'MB' &&
+          <button
+            onClick={sync}
+            disabled={sincronizando}
+            style={{
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '4px',
+              backgroundColor: sincronizando ? '#ccc' : '#007bff',
+              color: 'white',
+              cursor: sincronizando ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            Sincronizar
+          </button>
+        }
+
+
+
         <button
           onClick={handleDownload}
           disabled={descargando}

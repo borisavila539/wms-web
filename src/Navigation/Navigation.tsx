@@ -9,6 +9,7 @@ import ImpresionEtiquetaPreciosScreen from '../Screens/GeneracionPreciosCodigos/
 import ClientesGeneracionPreciosScreen from '../Screens/GeneracionPreciosCodigos/ClientesGeneracionPreciosScreen';
 import './Navigation.css';
 import TrackingPedidosScreen from '../Screens/TrackingPedidos/TrackingPedidosScreen';
+import ReceptionTela from '../Screens/ReceptionTela/ReceptionTela';
 
 export const Navigation = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -107,6 +108,15 @@ export const Navigation = () => {
                             Tracking Pedidos
                         </Link>
                     </li>
+                    <li>
+                        <Link
+                            to="ReceptionTela"
+                            onClick={toggleSidebar}
+                            className={location.pathname === '/Menu/ReceptionTela' ? 'active' : ''}
+                        >
+                            Recepción de Telas
+                        </Link>
+                    </li>
                 </ul>
             </div>
             <div className={`main-content ${isSidebarOpen ? '' : 'shrink'}`}>
@@ -125,6 +135,7 @@ export const Navigation = () => {
                     <Route path="EtiquetaPrecio" element={<ImpresionEtiquetaPreciosScreen />} />
                     <Route path="ClientesgeneracionPrecio" element={<ClientesGeneracionPreciosScreen />} />
                     <Route path="TrackingPedidos" element={<TrackingPedidosScreen />} />
+                    <Route path="ReceptionTela" element={<ReceptionTela />} />
 
                 </Routes>
             </div>

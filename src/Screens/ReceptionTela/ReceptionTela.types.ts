@@ -7,7 +7,7 @@ export interface ListTelasFilter {
     inventserialid:         string;
     vendroll:               string;
     inventserialid_picking: string;
-    is_scanning:            number;
+    is_scanning:            boolean;
     created_date:           Date;
     update_date:            null | Date;
     user:                   null | Date;
@@ -19,6 +19,7 @@ export interface ListTelasFilter {
     descriptionDefecto:     null | string;
     rowNum:                 number;
     totalRecords:           number;
+    nameProveedor:          string | null;
 }
 
 export interface ParmsFilter {
@@ -43,4 +44,9 @@ export interface PickingDefecto {
 export interface TelasFilterByReference {
     totalRollos:   number;
     totalCantidad: number;
+}
+
+export interface Impresoras {
+    iM_DESCRIPTION_PRINTER: string;
+    iM_IPPRINTER:           string;
 }

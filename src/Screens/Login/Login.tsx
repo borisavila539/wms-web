@@ -56,7 +56,11 @@ const Login = () => {
                         />
                     </div>
                     <button type="submit">Login</button>
+
                 </form>
+                <a href='/WMSAPP.apk' download>Descargar APK</a>
+
+
 
             </div>
         </div>

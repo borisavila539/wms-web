@@ -1,6 +1,6 @@
 import { useTable, Column } from 'react-table';
-import { ListTelasFilter, ParmsFilter, PickingDefecto, TelasFilterByReference } from './ReceptionTela.types';
-import React, { useEffect, useMemo, useState } from 'react';
+import { Impresoras, ListTelasFilter, ParmsFilter, PickingDefecto, TelasFilterByReference } from './ReceptionTela.types';
+import { useEffect, useMemo, useState } from 'react';
 import { WmSApi } from '../../api/WMSapi';
 import styles from './styles.module.css';
 import * as XLSX from 'xlsx';
@@ -11,6 +11,9 @@ const ReceptionTela = () => {
     const [data, setData] = useState<ListTelasFilter[]>([]);
     const [detailByReference, setDetailByReference] = useState<TelasFilterByReference | null>(null);
     const [listDefecto, setListDefecto] = useState<PickingDefecto[]>([]);
+    const [listImpresoras, setListImpresoras] = useState<Impresoras[]>([]);
+    const [ipPrinter, setIpPrinter] = useState<string>('');
+    const [isPrinter, setIsPrinter] = useState(false);
 
     const [paramsFiler, setParamsFiler] = useState<ParmsFilter>({
         "journalId": "REC-",
@@ -78,10 +81,20 @@ const ReceptionTela = () => {
         }
     }
 
-    const getTelaPickingDefecto = async () => {
+    const postPrintEtiquetas = async (ipPrinter:string, rollosToPrint: ListTelasFilter[]) =>{
         try {
-            const response = await WmSApi.get<PickingDefecto[]>('MWMS_RecTela/GetTelaPickingDefecto');
+            const response = await WmSApi.post(`MWMS_RecTela/PostPrintEtiquetasTela/${ipPrinter}`, rollosToPrint);
             return response.data;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    const getDataList = async () => {
+        try {
+            const pickingDefecto = (await WmSApi.get<PickingDefecto[]>('MWMS_RecTela/GetTelaPickingDefecto')).data;
+            const impresoras = (await WmSApi.get<Impresoras[]>('Impresoras')).data;
+            return { pickingDefecto, impresoras };
         } catch (error) {
             throw error;
         }
@@ -89,7 +102,7 @@ const ReceptionTela = () => {
 
     const getListTelasFilterByReference = async () => {
         try {
-            const response = await WmSApi.post<TelasFilterByReference>('MWMS_RecTela/GetListTelasFilterByReference', {...paramsFiler});
+            const response = await WmSApi.post<TelasFilterByReference>('MWMS_RecTela/GetListTelasFilterByReference', { ...paramsFiler });
             return response.data;
         } catch (error) {
             throw error;
@@ -131,16 +144,16 @@ const ReceptionTela = () => {
                 setTotalPages(response.length >= 1 ? response[0].totalRecords : 0);
                 setIsLoading(false);
 
-                if(paramsFiler.reference){
+                if (paramsFiler.reference) {
                     getListTelasFilterByReference()
-                    .then((data)=>{
-                        setDetailByReference(data);
-                    })
-                    .catch(()=>{
-                        setDetailByReference(null);
-                    })
-        
-                }else{
+                        .then((data) => {
+                            setDetailByReference(data);
+                        })
+                        .catch(() => {
+                            setDetailByReference(null);
+                        })
+
+                } else {
                     setDetailByReference(null);
                 }
 
@@ -149,14 +162,15 @@ const ReceptionTela = () => {
                 setIsLoading(false);
             })
 
-        
+
     }
 
     useEffect(() => {
         setIsLoading(true);
-        getTelaPickingDefecto()
+        getDataList()
             .then((data) => {
-                setListDefecto(data);
+                setListDefecto(data.pickingDefecto);
+                setListImpresoras(data.impresoras);
                 getData();
             })
             .catch(() => {
@@ -173,7 +187,7 @@ const ReceptionTela = () => {
     const dowloadExcel = () => {
         setIsDowloadExcel(true);
 
-        let customFilter = {...paramsFiler};
+        let customFilter = { ...paramsFiler };
         customFilter.pageSize = totalPages;
 
         getListTelasFilter(1, customFilter)
@@ -225,6 +239,27 @@ const ReceptionTela = () => {
             })
     }
 
+    const printRollos = () => {
+        setIsPrinter(true);
+        let customFilter = { ...paramsFiler,  };
+        customFilter.pageSize = totalPages;
+        customFilter.isScanning = true;
+
+        getListTelasFilter(1, customFilter)
+        .then(data=>{
+            postPrintEtiquetas(ipPrinter, data)
+            .then((data)=>{
+                setIsPrinter(false);
+            })
+            .catch(()=>{
+                setIsPrinter(false);
+                alert('No se pudo imprimir la etiqueta. Si el problema persiste, contacte con soporte. ');
+            })
+        })
+        .catch(()=>{
+            setIsPrinter(false);
+        })
+    }
 
     return <div style={{ paddingBottom: '1rem' }}>
         <h2 style={{ textAlign: 'center' }}>Recepción de Telas</h2>
@@ -328,9 +363,9 @@ const ReceptionTela = () => {
                     />
                 </div>
 
-                <div style={{ display: 'grid' }}>
+                <div style={{ display: 'flex', flexDirection:'column' }}>
                     <label htmlFor="telaPickingDefectoId" style={{ marginRight: '10px' }}>Defecto:</label>
-                    <select id='telaPickingDefectoId' value={paramsFiler.telaPickingDefectoId ?? ""} onChange={(e) => {
+                    <select  style={{flex: '1'}} id='telaPickingDefectoId' value={paramsFiler.telaPickingDefectoId ?? ""} onChange={(e) => {
                         updateParam('telaPickingDefectoId', e.target.value);
                     }}>
                         <option value="" disabled>Seleccione un defecto</option>
@@ -349,7 +384,7 @@ const ReceptionTela = () => {
                     })} />
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', gridColumn: 'span 2 / -1' }} >
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', gridColumn: 'span 3 / -1' }} >
                     {/** Paginador*/}
                     <div style={{ display: 'flex', }} >
                         <label htmlFor="page" style={{ marginRight: '10px' }}>Pagina:</label>
@@ -391,6 +426,29 @@ const ReceptionTela = () => {
                             Descargar excel
                         </button>
                     </div>
+                    <div style={{ borderLeft: '2px solid lightgray', paddingLeft: '8px', display: 'flex', gap: '2px',  }} >
+
+                        <div style={{ display: 'grid' }}>
+                            <select id='iM_IPPRINTER'  value={ipPrinter ?? ""} onChange={(e) => {
+                                setIpPrinter(e.target.value);
+                            }}>
+                                <option value="" disabled>Impresora</option>
+                                {listImpresoras.map(defecto => (
+                                    <option key={defecto.iM_IPPRINTER} value={defecto.iM_IPPRINTER}>
+                                        {defecto.iM_DESCRIPTION_PRINTER}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <button
+                            onClick={printRollos}
+                            disabled={((ipPrinter?.length < 1 || isPrinter) ? true : false )}
+                            className={`${styles.button} ${(ipPrinter?.length < 1 || isPrinter) ? styles.loading : ''}`}
+                        >
+                            Imprimir
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -398,15 +456,15 @@ const ReceptionTela = () => {
 
         {detailByReference && (
             <div style={{ display: "flex", gap: "12px", marginBottom: '1rem' }}>
-            <div style={{ padding: "12px", border: "1px solid #ddd", borderRadius: "8px", minWidth: "100px" }}>
-              <p style={{ fontSize: "24px", fontWeight: "bold", margin: "0" }}>{detailByReference?.totalCantidad.toFixed(2)}</p>
-              <p style={{ fontSize: "12px", color: "#666", margin: "0" }}>yd /  lbs</p>
+                <div style={{ padding: "12px", border: "1px solid #ddd", borderRadius: "8px", minWidth: "100px" }}>
+                    <p style={{ fontSize: "24px", fontWeight: "bold", margin: "0" }}>{detailByReference?.totalCantidad.toFixed(2)}</p>
+                    <p style={{ fontSize: "12px", color: "#666", margin: "0" }}>yd /  lbs</p>
+                </div>
+                <div style={{ padding: "12px", border: "1px solid #ddd", borderRadius: "8px", minWidth: "100px" }}>
+                    <p style={{ fontSize: "24px", fontWeight: "bold", margin: "0" }}>{detailByReference?.totalRollos}</p>
+                    <p style={{ fontSize: "12px", color: "#666", margin: "0" }}>Rollos</p>
+                </div>
             </div>
-            <div style={{ padding: "12px", border: "1px solid #ddd", borderRadius: "8px", minWidth: "100px" }}>
-              <p style={{ fontSize: "24px", fontWeight: "bold", margin: "0" }}>{detailByReference?.totalRollos}</p>
-              <p style={{ fontSize: "12px", color: "#666", margin: "0" }}>Rollos</p>
-            </div>
-          </div>
         )}
 
         <table {...getTableProps()} style={{ width: '100%', borderCollapse: 'collapse' }}>

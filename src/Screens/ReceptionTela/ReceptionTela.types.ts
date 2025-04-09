@@ -20,6 +20,7 @@ export interface ListTelasFilter {
     rowNum:                 number;
     totalRecords:           number;
     nameProveedor:          string | null;
+    configid:               string | null;
 }
 
 export interface ParmsFilter {
@@ -33,6 +34,7 @@ export interface ParmsFilter {
     ubicacion:            null | string;
     vendRoll:             null | string;
     pageNumber:           null | number;
+    configId:             null | number;
     pageSize:             number;
 }
 

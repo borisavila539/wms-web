@@ -25,8 +25,9 @@ const ReceptionTela = () => {
         "reference": null,
         "ubicacion": null,
         "vendRoll": null,
+        "configId": null,
         "pageNumber": 1,
-        "pageSize": 10
+        "pageSize": 30
     });
     const [isLoading, setIsLoading] = useState(false);
     const [isDowloadExcel, setIsDowloadExcel] = useState(false);
@@ -41,6 +42,7 @@ const ReceptionTela = () => {
             { Header: 'Color', accessor: 'nameColor' },
             { Header: 'Número de rollo', accessor: 'inventserialid' },
             { Header: 'Número de rollo proveedor', accessor: 'vendroll' },
+            { Header: 'Configuracion', accessor: 'configid' },
             { Header: 'Cantidad', accessor: 'qty', Cell: ({ value }) => (<>{value.toFixed(2)}</>) },
             { Header: 'Ubicación', accessor: 'location' },
             { Header: 'Descripción del Defecto', accessor: 'descriptionDefecto' },
@@ -119,6 +121,7 @@ const ReceptionTela = () => {
                 case "color":
                 case "inventBatchId":
                 case "inventSerialId":
+                case "configId":
                 case "telaPickingDefectoId":
                 case "reference":
                     return { ...prevState, [key]: value };
@@ -349,6 +352,18 @@ const ReceptionTela = () => {
                     />
                 </div>
 
+                <div style={{ display: 'grid' }}>
+                    <label htmlFor="configId" style={{ marginRight: '10px' }}>Configuracion:</label>
+                    <input
+                        type="text"
+                        id="configId"
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            updateParam('configId', value);
+                        }}
+                        className={styles.input}
+                    />
+                </div>
 
                 <div style={{ display: 'grid' }}>
                     <label htmlFor='ubicacion' style={{ marginRight: '10px' }}>Ubicacion:</label>

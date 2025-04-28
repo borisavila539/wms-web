@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { WmSApi } from '../../api/WMSapi'
-import { RecepcionUbicacionCajasInterface, RecepcionUbicacionFiltro } from '../../interfaces/RecepcionUbicacioncajas/RecepcionUbicacionCajasInterface'
+import { RecepcionUbicacionCajasInterface, RecepcionUbicacionFiltro, ResumenCajasUnidadesTP } from '../../interfaces/RecepcionUbicacioncajas/RecepcionUbicacionCajasInterface'
 import { useTable, Column } from 'react-table';
 import * as XLSX from 'xlsx';
 
@@ -8,6 +8,7 @@ import { saveAs } from 'file-saver';
 
 const RecepcionUbicacionCajas = () => {
   const [data, setData] = useState<RecepcionUbicacionCajasInterface[]>([])
+  const [dataResumenTP, setDataResumenTP] = useState<ResumenCajasUnidadesTP[]>([])
   const [cargando, setCargando] = useState<boolean>(false)
   const [sincronizando, setSincronizando] = useState<boolean>(false)
   const [descargando, setDescargando] = useState<boolean>(false)
@@ -60,6 +61,13 @@ const RecepcionUbicacionCajas = () => {
           setData(resp.data)
           setTotalPages(resp.data[0].paginas)
         })
+
+      if (tiposelected == "TP") {
+        await WmSApi.post<ResumenCajasUnidadesTP[]>(`ResumenCajasUnidadesTP`, filtro)
+          .then(resp => {
+            setDataResumenTP(resp.data)
+          })
+      }
     } catch (err) {
 
     }
@@ -110,7 +118,7 @@ const RecepcionUbicacionCajas = () => {
     element.href = 'http://10.100.2.17:8090/'
     document.body.appendChild(element)
 
-    if(element){
+    if (element) {
       element.click()
     }
 
@@ -355,7 +363,7 @@ const RecepcionUbicacionCajas = () => {
           Actualizar
         </button>
         {
-          tiposelected != 'MB' &&
+          tiposelected == 'DENIM' &&
           <button
             onClick={sync}
             disabled={sincronizando}
@@ -394,6 +402,33 @@ const RecepcionUbicacionCajas = () => {
         >
           Descargar
         </button>
+      </div>
+      <div>
+        {
+          tiposelected == "TP" && dataResumenTP.length > 0 &&
+          <div>
+            <table border={1}>
+              <thead>
+                <td>Talla</td>
+                <td>Cajas</td>
+                <td>Unidades</td>
+              </thead>
+              <tbody>
+                {
+                  dataResumenTP.map(element =>
+                  (
+                    <tr>
+                      <td>{element.talla}</td>
+                      <td>{element.cajas}</td>
+                      <td>{element.unidades}</td>
+                    </tr>
+                  )
+                  )
+                }
+              </tbody>
+            </table>
+          </div>
+        }
       </div>
       <table {...getTableProps()} style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>

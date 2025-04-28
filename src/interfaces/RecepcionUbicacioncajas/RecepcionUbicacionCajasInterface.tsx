@@ -38,3 +38,9 @@ export interface RecepcionUbicacionFiltro {
     tipo:string
 
 }
+
+export interface ResumenCajasUnidadesTP{
+    talla:string,
+    cajas:number,
+    unidades:number,
+}

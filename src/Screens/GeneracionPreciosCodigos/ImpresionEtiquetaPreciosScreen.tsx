@@ -3,29 +3,43 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { WmSApi } from '../../api/WMSapi'
 import { useTable, Column } from 'react-table';
-import { ImpresionEtiquetaPrecio } from '../../interfaces/GeneracionPrecioCodigos/GeneracionPrecioCodigoInterface';
+import { ImpresionEtiquetaPrecio, ImpresionPreciosForm, initialImpresionPreciosParms } from '../../interfaces/GeneracionPrecioCodigos/GeneracionPrecioCodigoInterface';
 import { ImpresorasInterface } from '../../interfaces/ImpresorasInterface';
 
 const ImpresionEtiquetaPreciosScreen = () => {
     const [data, setData] = useState<ImpresionEtiquetaPrecio[]>([])
     const [cargando, setCargando] = useState<boolean>(false)
     const [imprimiendo, setimprimiendo] = useState<boolean>(false)
-
-    const [pedido, setPedido] = useState<string>('')
-    const [ruta, setRuta] = useState<string>('')
-    const [caja, setcaja] = useState<string>('')
-    const [fecha, setfecha] = useState<string>('')
-
+    const [form, setImpresionPreciosForm] = useState<ImpresionPreciosForm>(initialImpresionPreciosParms);
     const [impresoras, setimpresoras] = useState<ImpresorasInterface[]>([])
-    const [impresora, setimpresora] = useState<string>('10.1.1.114')
+    
+    const mostrarCantidad = (form.pedido.trim() !== '' || form.ruta.trim() !== '')  &&
+        (form.codigoArticulo.trim() !== '' ) && 
+        form.talla.trim() !== '' &&
+        form.color.trim() !== '';
+
+    const ocultar = form.esGeneracionLibre && form.codigoArticulo.trim() !== '' ;
+
+    const mostrarCaja = !form.esGeneracionLibre;
+    const mostrarCodigoArticulo = form.esGeneracionLibre;
+    const mostrarTallaYColor = form.esGeneracionLibre && ocultar ;
+    const mostrarCantidadInput = mostrarTallaYColor && mostrarCantidad ;
 
 
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const target = e.target as HTMLInputElement | HTMLSelectElement;
+        const { name, value, type } = target;
+        setImpresionPreciosForm(prevState => ({
+            ...prevState,
+            [name]: type === 'checkbox' ? (target as HTMLInputElement).checked : value
+        }));
+    };
 
     const getImpresoras = async () => {
         try {
             await WmSApi.get<ImpresorasInterface[]>('Impresoras').then(resp => {
                 setimpresoras(resp.data)
-                setimpresora(resp.data[0].iM_IPPRINTER)
+                setImpresionPreciosForm(prev => ({ ...prev, impresora: resp.data[0].iM_IPPRINTER }))
             })
         } catch (err) {
 
@@ -35,9 +49,11 @@ const ImpresionEtiquetaPreciosScreen = () => {
     const getData = async () => {
         setCargando(true)
         try {
-            await WmSApi.get<ImpresionEtiquetaPrecio[]>(`ImpresionPrecioCodigos/${pedido != '' ? pedido : '-'}/${ruta != '' ? ruta : '-'}/${caja != '' ? caja : '-'}`)
+            const url = 'GetPrecioCodigos';
+            await WmSApi.get<ImpresionEtiquetaPrecio[]>(url, { params: form })
                 .then(resp => {
                     setData(resp.data)
+                    console.log(resp.data)
                 })
         } catch (err) {
             console.log(err)
@@ -48,7 +64,7 @@ const ImpresionEtiquetaPreciosScreen = () => {
     const imprimir = async () => {
         setimprimiendo(true)
         try {
-            await WmSApi.get<string>(`ImpresionPrecioCodigos/${pedido != '' ? pedido : '-'}/${ruta != '' ? ruta : '-'}/${caja != '' ? caja : '-'}/${fecha != '' ? fecha : '-'}/${impresora}`)
+            await WmSApi.get<string>('ImpresionPrecioCodigos', { params: form })
                 .then(resp => {
                     if (resp.data != "OK") {
                         alert(resp.data);
@@ -62,9 +78,7 @@ const ImpresionEtiquetaPreciosScreen = () => {
 
 
     const Limpiar = () => {
-        setPedido('')
-        setRuta('')
-        setcaja('')
+        setImpresionPreciosForm(initialImpresionPreciosParms);
     }
 
     const columns: Column<ImpresionEtiquetaPrecio>[] = useMemo(
@@ -133,13 +147,35 @@ const ImpresionEtiquetaPreciosScreen = () => {
         <div>
             <h2 style={{ textAlign: 'center' }}>Configuracion Precios Codigos</h2>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px', gap: '10px' }}>
+
                 <div>
-                    <label htmlFor="Pedido" style={{ marginRight: '10px' }}>Pedido:</label>
+                    <label htmlFor="Generacion_Libre" style={{ marginRight: '10px' }}>Generación Libre</label>
+                    <input
+                        type="checkbox"
+                        id="generacion_Libre"
+                        name="esGeneracionLibre"
+                        checked={form.esGeneracionLibre}
+                        onChange={handleChange}
+                        style={{
+                            padding: '8px',
+                            border: '2px solid #ccc',
+                            borderRadius: '4px',
+                            width: '100px',
+                            cursor: 'pointer',
+                            height: '20px',
+                            marginTop: '4px'
+                        }}
+                    />
+                </div>
+
+                <div>
+                    <label htmlFor="Pedido" style={{ marginRight: '10px' }}>Pedido</label>
                     <input
                         type="text"
                         id="pedido"
-                        value={pedido}
-                        onChange={(e) => setPedido(e.target.value)}
+                        name="pedido"
+                        value={form.pedido}
+                        onChange={handleChange}
                         style={{
                             padding: '8px',
                             border: '1px solid #ccc',
@@ -150,12 +186,13 @@ const ImpresionEtiquetaPreciosScreen = () => {
                 </div>
 
                 <div>
-                    <label htmlFor="Ruta" style={{ marginRight: '10px' }}>Ruta:</label>
+                    <label htmlFor="Ruta" style={{ marginRight: '10px' }}>Ruta</label>
                     <input
                         type="text"
                         id="Ruta"
-                        value={ruta}
-                        onChange={(e) => setRuta(e.target.value)}
+                        name="ruta"
+                        value={form.ruta}
+                        onChange={handleChange}
                         style={{
                             padding: '8px',
                             border: '1px solid #ccc',
@@ -164,28 +201,109 @@ const ImpresionEtiquetaPreciosScreen = () => {
                         }}
                     />
                 </div>
+
+                {mostrarCaja && (
+                    <div>
+                        <label htmlFor="Caja" style={{ marginRight: '10px' }}>Caja</label>
+                        <input
+                            type="text"
+                            id="Caja"
+                            name="caja"
+                            value={form.caja}
+                            onChange={handleChange}
+                            style={{
+                                padding: '8px',
+                                border: '1px solid #ccc',
+                                borderRadius: '4px',
+                                width: '100px',
+                            }}
+                        />
+                    </div>
+                )}
+
+                {mostrarCodigoArticulo && (
+                    <div>
+                        <label htmlFor="CodigogoArticulo" style={{ marginRight: '10px' }}>Codigo Art.</label>
+                        <input
+                            type="text"
+                            id="codigoArticulo"
+                            name="codigoArticulo"
+                            value={form.codigoArticulo}
+                            onChange={handleChange}
+                            style={{
+                                padding: '8px',
+                                border: '1px solid #ccc',
+                                borderRadius: '4px',
+                                width: '100px',
+                            }}
+                        />
+                    </div>
+                )}
+
+                {mostrarTallaYColor && (
+                    <>
+                        <div>
+                            <label htmlFor="Talla" style={{ marginRight: '10px' }}>Talla</label>
+                            <input
+                                type="text"
+                                id="talla"
+                                name="talla"
+                                value={form.talla}
+                                onChange={handleChange}
+                                style={{
+                                    padding: '8px',
+                                    border: '1px solid #ccc',
+                                    borderRadius: '4px',
+                                    width: '100px',
+                                }}
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="Color" style={{ marginRight: '10px' }}>Color</label>
+                            <input
+                                type="text"
+                                id="color"
+                                name="color"
+                                value={form.color}
+                                onChange={handleChange}
+                                style={{
+                                    padding: '8px',
+                                    border: '1px solid #ccc',
+                                    borderRadius: '4px',
+                                    width: '100px',
+                                }}
+                            />
+                        </div>
+                    </>
+                )}
+
+                {mostrarCantidadInput && (
+                    <div>
+                        <label htmlFor="CantidadImprimir" style={{ marginRight: '10px' }}>Cantidad</label>
+                        <input
+                            type='text'
+                            id="canidadImprimir"
+                            name="cantidadImprimir"
+                            value={form.cantidadImprimir}
+                            onChange={handleChange}
+                            style={{
+                                padding: '8px',
+                                border: '1px solid #ccc',
+                                borderRadius: '4px',
+                                width: '100px',
+                            }}
+                        />
+                    </div>
+                )}
+
                 <div>
-                    <label htmlFor="Caja" style={{ marginRight: '10px' }}>Caja:</label>
-                    <input
-                        type="text"
-                        id="Caja"
-                        value={caja}
-                        onChange={(e) => setcaja(e.target.value)}
-                        style={{
-                            padding: '8px',
-                            border: '1px solid #ccc',
-                            borderRadius: '4px',
-                            width: '100px',
-                        }}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="Fecha" style={{ marginRight: '10px' }}>Fecha:</label>
+                    <label htmlFor="Fecha" style={{ marginRight: '10px' }}>Fecha</label>
                     <input
                         type="text"
                         id="Fecha"
-                        value={fecha}
-                        onChange={(e) => setfecha(e.target.value)}
+                        name="fecha"
+                        value={form.fecha}
+                        onChange={handleChange}
                         style={{
                             padding: '8px',
                             border: '1px solid #ccc',
@@ -254,7 +372,7 @@ const ImpresionEtiquetaPreciosScreen = () => {
                 </button>
                 <div>
 
-                    <select name="impresora" id="impresora" onChange={(e) => setimpresora(e.target.value)}>
+                    <select name="impresora" id="impresora" onChange={handleChange} value={form.impresora}>
                         {impresoras.map((impresora) => (
                             <option key={impresora.iM_IPPRINTER} value={impresora.iM_IPPRINTER}>
                                 {impresora.iM_DESCRIPTION_PRINTER}

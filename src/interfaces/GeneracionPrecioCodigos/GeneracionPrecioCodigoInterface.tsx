@@ -47,3 +47,29 @@ export interface ClientesGeneracionPrecio{
   moneda: string,
   decimal: boolean
 }
+
+export interface ImpresionPreciosForm{
+  esGeneracionLibre: boolean;
+  codigoArticulo: string;
+  talla: string;
+  color: string;
+  pedido: string;
+  ruta: string;
+  caja: string;
+  fecha: string; 
+  impresora: string;
+  cantidadImprimir: string;
+}
+
+export const initialImpresionPreciosParms: ImpresionPreciosForm = {
+  esGeneracionLibre: false,
+  codigoArticulo: "",
+  talla: "",
+  color: "",
+  pedido: "",
+  ruta: "",
+  caja: "",
+  fecha: "",      // si prefieres, aquí podrías poner new Date().toISOString().slice(0,10)
+  impresora: "10.1.1.114",
+  cantidadImprimir: "0"
+};

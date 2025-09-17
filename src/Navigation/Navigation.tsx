@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, Route, Routes, useLocation } from 'react-router-dom';
 import RecepcionUbicacionCajas from '../Screens/RecepcionUbicaiconCajas/RecepcionUbicacionCajas';
 import DeclaracionEnvio from '../Screens/DeclaracionEnvio/DeclaracionEnvio';
@@ -7,27 +8,42 @@ import GeneracionCodigosPreciosScreen from '../Screens/GeneracionPreciosCodigos/
 import ConfiguracionPrecioCodigosScreen from '../Screens/GeneracionPreciosCodigos/ConfiguracionPrecioCodigosScreen';
 import ImpresionEtiquetaPreciosScreen from '../Screens/GeneracionPreciosCodigos/ImpresionEtiquetaPreciosScreen';
 import ClientesGeneracionPreciosScreen from '../Screens/GeneracionPreciosCodigos/ClientesGeneracionPreciosScreen';
-import './Navigation.css';
 import TrackingPedidosScreen from '../Screens/TrackingPedidos/TrackingPedidosScreen';
 import ReceptionTela from '../Screens/ReceptionTela/ReceptionTela';
 
+import './Navigation.css';
+
 export const Navigation = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
-    const [isSubMenuOpen, setSubMenuOpen] = useState(false); // Estado para el submenú
+    const [isSubMenuOpen, setSubMenuOpen] = useState(false);
     const location = useLocation();
 
     const toggleSidebar = () => {
-        setSidebarOpen(!isSidebarOpen);
+        if (isSidebarOpen) {
+            const sidebarElement = document.querySelector('.sidebar');
+            if (sidebarElement) {
+                sidebarElement.classList.add('closing');
+            }
+            setTimeout(() => {
+                setSidebarOpen(false);
+                const sidebarElement = document.querySelector('.sidebar');
+                if (sidebarElement) {
+                    sidebarElement.classList.remove('closing');
+                }
+            }, 50);
+        } else {
+            setSidebarOpen(true);
+        }
     };
 
     const toggleSubMenu = () => {
-        setSubMenuOpen(!isSubMenuOpen); // Alternar la visibilidad del submenú
+        setSubMenuOpen(!isSubMenuOpen);
     };
 
     return (
         <div className="dashboard-container">
             <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
-                <h3 style={{ textAlign: 'center' }}>WMS</h3>
+                <h3>WMS</h3>
                 <ul>
                     <li>
                         <Link
@@ -56,11 +72,14 @@ export const Navigation = () => {
                             Control Cajas Etiquetado
                         </Link>
                     </li>
-                    <li onClick={toggleSubMenu} style={{ cursor: 'pointer' }}>
+
+                    {/* Submenú */}
+                    <li onClick={toggleSubMenu} className="submenu-toggle">
                         <span>Generacion Precios y Codigos</span>
+                        <span className={`arrow ${isSubMenuOpen ? 'open' : ''}`}>&#9662;</span>
                     </li>
-                    {isSubMenuOpen && ( // Si el submenú está abierto, mostrar los enlaces
-                        <ul>
+                    {isSubMenuOpen && (
+                        <ul className="submenu">
                             <li>
                                 <Link
                                     to="EtiquetaPrecio"
@@ -99,6 +118,7 @@ export const Navigation = () => {
                             </li>
                         </ul>
                     )}
+
                     <li>
                         <Link
                             to="TrackingPedidos"
@@ -119,6 +139,7 @@ export const Navigation = () => {
                     </li>
                 </ul>
             </div>
+
             <div className={`main-content ${isSidebarOpen ? '' : 'shrink'}`}>
                 <div className="hamburger" onClick={toggleSidebar}>
                     <div></div>
@@ -136,9 +157,9 @@ export const Navigation = () => {
                     <Route path="ClientesgeneracionPrecio" element={<ClientesGeneracionPreciosScreen />} />
                     <Route path="TrackingPedidos" element={<TrackingPedidosScreen />} />
                     <Route path="ReceptionTela" element={<ReceptionTela />} />
-
                 </Routes>
             </div>
         </div>
     );
 };
+

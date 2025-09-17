@@ -1,90 +1,146 @@
-/* Estilos para el contenedor del Dashboard */
 .dashboard-container {
-    display: flex;
-    height: 100vh;
-    background-color: #f0f2f5;
-  }
-  
-  /* Estilos para el menú lateral */
-  .sidebar {
-    width: 250px;
-    background-color: #343a40;
-    padding: 1rem;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease-in-out;
-  }
-  
-  .sidebar.open {
-    transform: translateX(0);
-  }
-  
-  .sidebar h3 {
-    color: #ffffff;
-    margin-bottom: 2rem;
-  }
-  
-  .sidebar ul {
-    list-style-type: none;
-    padding: 0;
-  }
-  
-  .sidebar ul li {
-    margin-bottom: 1rem;
-  }
-  
-  .sidebar ul li a {
-    color: #cfd8dc;
-    text-decoration: none;
-    padding: 0.75rem 1rem;
-    display: block;
-    border-radius: 4px;
-    transition: background-color 0.3s, color 0.3s;
-  }
-  
-  .sidebar ul li a:hover {
-    background-color: #495057;
-    color: #ffffff;
-  }
-  
-  .sidebar ul li a.active {
-    background-color: #007bff;
-    color: white;
-  }
-  
-  /* Estilos para el botón hamburguesa */
-  .hamburger {
-    position: fixed;
-    top: 1rem;
-    left: 1rem;
-    z-index: 1000;
-    cursor: pointer;
-  }
-  
-  .hamburger div {
-    width: 30px;
-    height: 3px;
-    background-color: #333;
-    margin: 5px 0;
-    transition: 0.4s;
-  }
-  
-  /* Estilos para el contenido principal */
-  .main-content {
-    flex-grow: 1;
-    padding: 2rem;
-    margin-left: 250px;
-    background-color: #ffffff;
-    transition: margin-left 0.3s ease-in-out;
-  }
-  
-  .main-content.shrink {
-    margin-left: 0;
-  }
-  
+  display: flex;
+  height: 100vh;
+  background-color: #f0f2f5;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 250px;
+  background-color: #343a40;
+  padding: 1rem;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  transition: none; /* no transition por defecto */
+  overflow-y: auto; /* scroll si hay muchos items */
+  z-index: 100;
+}
+
+.sidebar.open {
+  transform: translateX(0);
+  transition: transform 0.3s ease-in-out; /* transición al abrir */
+}
+
+.sidebar.closing {
+  transition: none; /* cierre instantáneo */
+}
+
+.sidebar h3 {
+  color: #fff;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar ul li {
+  margin-bottom: 0.5rem;
+}
+
+.sidebar ul li a {
+  color: #cfd8dc;
+  text-decoration: none;
+  padding: 0.5rem 0.75rem;
+  display: block;
+  border-radius: 4px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.sidebar ul li a:hover {
+  background-color: #495057;
+  color: #fff;
+}
+
+.sidebar ul li a.active {
+  background-color: #007bff;
+  color: #fff;
+}
+
+/* Submenu */
+.submenu-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  color: #cfd8dc;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+}
+
+.submenu-toggle:hover {
+  background-color: #495057;
+  color: #fff;
+}
+
+.submenu {
+  margin-left: 1rem;
+  border-left: 2px solid #555;
+  padding-left: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.submenu li a {
+  font-size: 0.9rem;
+}
+
+/* Flecha del submenu */
+.arrow {
+  transition: transform 0.3s ease;
+}
+
+.arrow.open {
+  transform: rotate(180deg);
+}
+
+/* Botón hamburguesa */
+.hamburger {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 200;
+  cursor: pointer;
+}
+
+.hamburger div {
+  width: 30px;
+  height: 3px;
+  background-color: #333;
+  margin: 5px 0;
+  transition: 0.4s;
+}
+
+/* Contenido principal */
+.main-content {
+  flex-grow: 1;
+  padding: 2rem;
+  margin-left: 250px;
+  background-color: #fff;
+  transition: margin-left 0.3s ease-in-out;
+}
+
+.main-content.shrink {
+  margin-left: 0;
+}
+
+/* Scroll estilo opcional */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background-color: #555;
+  border-radius: 3px;
+}
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background-color: #777;
+}

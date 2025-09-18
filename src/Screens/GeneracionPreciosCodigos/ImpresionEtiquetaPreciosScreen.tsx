@@ -12,19 +12,18 @@ const ImpresionEtiquetaPreciosScreen = () => {
     const [imprimiendo, setimprimiendo] = useState<boolean>(false)
     const [form, setImpresionPreciosForm] = useState<ImpresionPreciosForm>(initialImpresionPreciosParms);
     const [impresoras, setimpresoras] = useState<ImpresorasInterface[]>([])
-    
-    const mostrarCantidad = (form.pedido.trim() !== '' || form.ruta.trim() !== '')  &&
-        (form.codigoArticulo.trim() !== '' ) && 
+
+    const mostrarCantidad = (form.pedido.trim() !== '' || form.ruta.trim() !== '') &&
+        (form.codigoArticulo.trim() !== '') &&
         form.talla.trim() !== '' &&
         form.color.trim() !== '';
 
-    const ocultar = form.esGeneracionLibre && form.codigoArticulo.trim() !== '' ;
+    const ocultar = form.esGeneracionLibre && form.codigoArticulo.trim() !== '';
 
     const mostrarCaja = !form.esGeneracionLibre;
     const mostrarCodigoArticulo = form.esGeneracionLibre;
-    const mostrarTallaYColor = form.esGeneracionLibre && ocultar ;
-    const mostrarCantidadInput = mostrarTallaYColor && mostrarCantidad ;
-
+    const mostrarTallaYColor = form.esGeneracionLibre && ocultar;
+    const mostrarCantidadInput = mostrarTallaYColor && mostrarCantidad;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const target = e.target as HTMLInputElement | HTMLSelectElement;
@@ -33,6 +32,24 @@ const ImpresionEtiquetaPreciosScreen = () => {
             ...prevState,
             [name]: type === 'checkbox' ? (target as HTMLInputElement).checked : value
         }));
+
+        if (!ocultar) {
+            setImpresionPreciosForm(prevState => ({
+                ...prevState,
+                talla: '',
+                color: '',
+                cantidadImprimir: '',
+            }));
+        }
+        if (name === 'esGeneracionLibre' && !(target as HTMLInputElement).checked) {
+            setImpresionPreciosForm(prevState => ({
+                ...prevState,
+                codigoArticulo: '',
+                talla: '',
+                color: '',
+                cantidadImprimir: '',
+            }));
+        }
     };
 
     const getImpresoras = async () => {
@@ -243,22 +260,6 @@ const ImpresionEtiquetaPreciosScreen = () => {
                 {mostrarTallaYColor && (
                     <>
                         <div>
-                            <label htmlFor="Talla" style={{ marginRight: '10px' }}>Talla</label>
-                            <input
-                                type="text"
-                                id="talla"
-                                name="talla"
-                                value={form.talla}
-                                onChange={handleChange}
-                                style={{
-                                    padding: '8px',
-                                    border: '1px solid #ccc',
-                                    borderRadius: '4px',
-                                    width: '100px',
-                                }}
-                            />
-                        </div>
-                        <div>
                             <label htmlFor="Color" style={{ marginRight: '10px' }}>Color</label>
                             <input
                                 type="text"
@@ -274,6 +275,23 @@ const ImpresionEtiquetaPreciosScreen = () => {
                                 }}
                             />
                         </div>
+                        <div>
+                            <label htmlFor="Talla" style={{ marginRight: '10px' }}>Talla</label>
+                            <input
+                                type="text"
+                                id="talla"
+                                name="talla"
+                                value={form.talla}
+                                onChange={handleChange}
+                                style={{
+                                    padding: '8px',
+                                    border: '1px solid #ccc',
+                                    borderRadius: '4px',
+                                    width: '100px',
+                                }}
+                            />
+                        </div>
+
                     </>
                 )}
 

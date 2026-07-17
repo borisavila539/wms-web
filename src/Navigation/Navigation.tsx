@@ -10,8 +10,8 @@ import ImpresionEtiquetaPreciosScreen from '../Screens/GeneracionPreciosCodigos/
 import ClientesGeneracionPreciosScreen from '../Screens/GeneracionPreciosCodigos/ClientesGeneracionPreciosScreen';
 import TrackingPedidosScreen from '../Screens/TrackingPedidos/TrackingPedidosScreen';
 import ReceptionTela from '../Screens/ReceptionTela/ReceptionTela';
-
-import './Navigation.css';
+import { ConsultaRollosPorAlmacen } from '../Screens/ConsultaRollosPorAlmacen/ConsultaRollosPorAlmacen';
+import '../Navigation/Navigation.css';
 
 export const Navigation = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -45,6 +45,15 @@ export const Navigation = () => {
             <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
                 <h3>WMS</h3>
                 <ul>
+                    <li>
+                        <Link
+                            to="ConsultaRollosPorAlmacen"
+                            onClick={toggleSidebar}
+                            className={location.pathname === '/Menu/ConsultaRollosPorAlmacen' ? 'active' : ''}
+                        >
+                            Consulta Rollos Por Almacen
+                        </Link>
+                    </li>
                     <li>
                         <Link
                             to="RecepcionUbicacionCajas"
@@ -147,6 +156,7 @@ export const Navigation = () => {
                     <div></div>
                 </div>
                 <Routes>
+                    <Route path="Menu" element={<ConsultaRollosPorAlmacen />} />
                     <Route path="" element={<RecepcionUbicacionCajas />} />
                     <Route path="RecepcionUbicacionCajas" element={<RecepcionUbicacionCajas />} />
                     <Route path="DeclaracionEnvio" element={<DeclaracionEnvio />} />
@@ -157,6 +167,7 @@ export const Navigation = () => {
                     <Route path="ClientesgeneracionPrecio" element={<ClientesGeneracionPreciosScreen />} />
                     <Route path="TrackingPedidos" element={<TrackingPedidosScreen />} />
                     <Route path="ReceptionTela" element={<ReceptionTela />} />
+                    <Route path="ConsultaRollosPorAlmacen" element={<ConsultaRollosPorAlmacen />} />
                 </Routes>
             </div>
         </div>

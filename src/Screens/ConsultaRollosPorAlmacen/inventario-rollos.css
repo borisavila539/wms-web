@@ -1,0 +1,403 @@
+.inv-root {
+  --inv-bg: #f4f5f7;
+  --inv-surface: #ffffff;
+  --inv-border: #dfe3e8;
+  --inv-border-soft: #eceef1;
+  --inv-text: #1f2733;
+  --inv-muted: #6b7480;
+  --inv-primary: #0f6fde;
+  --inv-primary-hover: #0c5cba;
+  --inv-primary-soft: #e7f0fd;
+  --inv-danger: #c0392b;
+  --inv-danger-soft: #fdecea;
+  --inv-header-row: #eef1f4;
+
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--inv-bg);
+  color: var(--inv-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.inv-root *,
+.inv-root *::before,
+.inv-root *::after {
+  box-sizing: border-box;
+}
+
+/* -------------------- Encabezado -------------------- */
+.inv-header {
+  background: var(--inv-surface);
+  border-bottom: 1px solid var(--inv-border);
+  flex-shrink: 0;
+}
+
+.inv-header-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  padding: 14px 20px;
+}
+
+.inv-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.inv-icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: var(--inv-primary-soft);
+  color: var(--inv-primary);
+  flex-shrink: 0;
+}
+
+.inv-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.inv-subtitle {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--inv-muted);
+}
+
+/* -------------------- Formulario de almacén -------------------- */
+.inv-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.inv-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inv-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--inv-muted);
+}
+
+.inv-input {
+  height: 36px;
+  border: 1px solid var(--inv-border);
+  border-radius: 6px;
+  background: var(--inv-surface);
+  padding: 0 10px;
+  font-size: 14px;
+  color: var(--inv-text);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.inv-input:focus-visible {
+  border-color: var(--inv-primary);
+  box-shadow: 0 0 0 3px var(--inv-primary-soft);
+}
+
+.inv-input-almacen {
+  width: 130px;
+}
+
+.inv-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 6px;
+  background: var(--inv-primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.inv-btn:hover:not(:disabled) {
+  background: var(--inv-primary-hover);
+}
+
+.inv-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.inv-btn-ghost {
+  height: 32px;
+  padding: 0 12px;
+  background: transparent;
+  border: 1px solid var(--inv-border);
+  color: var(--inv-muted);
+  font-size: 12px;
+}
+
+.inv-btn-ghost:hover:not(:disabled) {
+  background: var(--inv-border-soft);
+}
+
+/* -------------------- Resumen / info -------------------- */
+.inv-meta {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 13px;
+}
+
+.inv-badge {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid var(--inv-border);
+  background: var(--inv-header-row);
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: var(--inv-muted);
+  white-space: nowrap;
+}
+
+.inv-strong {
+  font-weight: 600;
+  color: var(--inv-text);
+}
+
+/* -------------------- Error -------------------- */
+.inv-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border-top: 1px solid rgba(192, 57, 43, 0.3);
+  background: var(--inv-danger-soft);
+  color: var(--inv-danger);
+  padding: 12px 20px;
+  font-size: 13px;
+}
+
+.inv-error svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* -------------------- Área de scroll + tabla -------------------- */
+.inv-scroll {
+  position: relative;
+  flex: 1;
+  overflow: auto;
+}
+
+.inv-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 100%;
+  color: var(--inv-muted);
+  text-align: center;
+  padding: 24px;
+}
+
+.inv-empty svg {
+  opacity: 0.4;
+}
+
+.inv-table {
+  width: max-content; /* Permite que la tabla se expanda horizontalmente al agrandar columnas */
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  table-layout: fixed; /* Fuerza a las celdas a respetar exactamente los anchos asignados */
+}
+
+.inv-table th,
+.inv-table td {
+  white-space: nowrap;
+}
+
+/* Cabecera pegajosa (dos filas: título + filtro) */
+.inv-thead-labels th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--inv-header-row);
+  border-bottom: 1px solid var(--inv-border);
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--inv-muted);
+  user-select: none; /* Previene la selección de texto incómoda al arrastrar */
+}
+
+.inv-thead-filters th {
+  position: sticky;
+  top: 33px; /* alto aprox. de la fila de títulos */
+  z-index: 2;
+  background: var(--inv-surface);
+  border-bottom: 1px solid var(--inv-border);
+  padding: 6px;
+}
+
+.inv-th-numeric {
+  text-align: right !important;
+}
+
+/* Contenedor flexible del texto del encabezado y el resizer */
+.inv-th-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.inv-th-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 8px;
+  flex-grow: 1;
+}
+
+/* El tirador invisible/interactivo para redimensionar */
+.inv-resizer {
+  position: absolute;
+  right: -12px; /* Margen interactivo expandido */
+  top: -8px;
+  bottom: -8px;
+  width: 10px;
+  cursor: col-resize;
+  z-index: 4;
+}
+
+/* Indicador visual al hacer hover o interactuar con el borde */
+.inv-resizer:hover,
+.inv-resizer:active {
+  background-color: var(--inv-primary);
+  opacity: 0.5;
+  width: 4px;
+  right: -6px;
+}
+
+.inv-filter-input {
+  width: 100%;
+  min-width: 100%;
+  height: 28px;
+  border: 1px solid var(--inv-border);
+  border-radius: 4px;
+  background: var(--inv-surface);
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--inv-text);
+  outline: none;
+}
+
+.inv-filter-input:focus-visible {
+  border-color: var(--inv-primary);
+  box-shadow: 0 0 0 2px var(--inv-primary-soft);
+}
+
+.inv-filter-input.inv-th-numeric {
+  text-align: right;
+}
+
+.inv-table tbody td {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--inv-border-soft);
+}
+
+.inv-table tbody tr:nth-child(even) {
+  background: #fafbfc;
+}
+
+.inv-table tbody tr:hover {
+  background: var(--inv-primary-soft);
+}
+
+.inv-td-numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.inv-no-rows {
+  padding: 40px 12px;
+  text-align: center;
+  color: var(--inv-muted);
+}
+
+/* Totales pegajosos al fondo */
+.inv-tfoot td {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  background: var(--inv-header-row);
+  border-top: 1px solid var(--inv-border);
+  padding: 8px 12px;
+  font-weight: 600;
+}
+
+.inv-tfoot-label {
+  text-align: right;
+  color: var(--inv-muted);
+}
+
+/* -------------------- Centinela infinite scroll -------------------- */
+.inv-sentinel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  font-size: 13px;
+  color: var(--inv-muted);
+}
+
+/* -------------------- Spinner -------------------- */
+.inv-spin {
+  animation: inv-spin 0.9s linear infinite;
+}
+
+@keyframes inv-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 1. Añade esta variable de color verde dentro de .inv-root { ... } */
+.inv-root {
+  /* ... tus variables anteriores ... */
+  --inv-success: #1e7e34;
+  --inv-success-hover: #155d24;
+}
+
+/* 2. Añade esta clase en la sección de botones de tu CSS */
+.inv-btn-success {
+  background: var(--inv-success);
+}
+
+.inv-btn-success:hover:not(:disabled) {
+  background: var(--inv-success-hover);
+}

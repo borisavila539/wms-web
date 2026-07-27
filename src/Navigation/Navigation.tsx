@@ -11,7 +11,13 @@ import ClientesGeneracionPreciosScreen from '../Screens/GeneracionPreciosCodigos
 import TrackingPedidosScreen from '../Screens/TrackingPedidos/TrackingPedidosScreen';
 import ReceptionTela from '../Screens/ReceptionTela/ReceptionTela';
 import { ConsultaRollosPorAlmacen } from '../Screens/ConsultaRollosPorAlmacen/ConsultaRollosPorAlmacen';
+
+// TypeScript may not have type declarations for CSS imports in this project setup.
+// Ignore the missing module error for this side-effect import.
+// @ts-ignore
 import '../Navigation/Navigation.css';
+import { DespachoImport } from '../Screens/GenerarDespachoPorPantilla/DespachoImport';
+import ConsultaDespacho from '../Screens/ConsultarDespacho/ConsultaDespacho';
 
 export const Navigation = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -146,6 +152,24 @@ export const Navigation = () => {
                             Recepción de Telas
                         </Link>
                     </li>
+                    <li>
+                        <Link
+                            to="DespachoImport"
+                            onClick={toggleSidebar}
+                            className={location.pathname === '/Menu/DespachoImpot' ? 'active' : ''}
+                        >
+                            Generacion de Despachos PT
+                        </Link>
+                    </li>
+                                        <li>
+                        <Link
+                            to="ConsultaDespacho"
+                            onClick={toggleSidebar}
+                            className={location.pathname === '/Menu/ConsultaDespacho' ? 'active' : ''}
+                        >
+                            Consultar Despacho PT
+                        </Link>
+                    </li>
                 </ul>
             </div>
 
@@ -168,6 +192,8 @@ export const Navigation = () => {
                     <Route path="TrackingPedidos" element={<TrackingPedidosScreen />} />
                     <Route path="ReceptionTela" element={<ReceptionTela />} />
                     <Route path="ConsultaRollosPorAlmacen" element={<ConsultaRollosPorAlmacen />} />
+                    <Route path='DespachoImport' element = {<DespachoImport/>}/>
+                    <Route path='ConsultaDespacho' element = {<ConsultaDespacho/>}/>
                 </Routes>
             </div>
         </div>

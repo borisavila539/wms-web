@@ -5,8 +5,10 @@ export interface WMSState {
     usuario: string
 }
 
+const USUARIO_STORAGE_KEY = 'wms_usuario'
+
 export const WMSInitialState: WMSState = {
-    usuario: ''
+    usuario: (typeof localStorage !== 'undefined' && localStorage.getItem(USUARIO_STORAGE_KEY)) || ''
 }
 
 export interface WMSContextProps {
@@ -21,6 +23,7 @@ export const WMSProvider = ({ children }: any) => {
     const [WMSState, dispatch] = useReducer(WMSReducer, WMSInitialState);
 
     const changeUsuario = (usuario: string) => {
+        localStorage.setItem(USUARIO_STORAGE_KEY, usuario)
         dispatch({ type: 'changeUsuario', payload: usuario })
     }
 

@@ -122,10 +122,12 @@
 /* Contenido principal */
 .main-content {
   flex-grow: 1;
+  min-width: 0;
   padding: 2rem;
   margin-left: 250px;
   background-color: #fff;
   transition: margin-left 0.3s ease-in-out;
+  overflow-x: hidden;
 }
 
 .main-content.shrink {

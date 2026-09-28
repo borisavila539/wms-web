@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, Route, Routes, useLocation } from 'react-router-dom';
 import RecepcionUbicacionCajas from '../Screens/RecepcionUbicaiconCajas/RecepcionUbicacionCajas';
 import DeclaracionEnvio from '../Screens/DeclaracionEnvio/DeclaracionEnvio';
@@ -18,6 +18,7 @@ import { ConsultaRollosPorAlmacen } from '../Screens/ConsultaRollosPorAlmacen/Co
 import '../Navigation/Navigation.css';
 import { DespachoImport } from '../Screens/GenerarDespachoPorPantilla/DespachoImport';
 import ConsultaDespacho from '../Screens/ConsultarDespacho/ConsultaDespacho';
+import RecepcionFacturasCDScreen from '../Screens/RecepcionFacturasCD/RecepcionFacturasCDScreen';
 
 export const Navigation = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -170,6 +171,15 @@ export const Navigation = () => {
                             Consultar Despacho PT
                         </Link>
                     </li>
+                    <li>
+                        <Link
+                            to="RecepcionFacturasCD"
+                            onClick={toggleSidebar}
+                            className={location.pathname === '/Menu/RecepcionFacturasCD' ? 'active' : ''}
+                        >
+                            Recepción Facturas en CD
+                        </Link>
+                    </li>
                 </ul>
             </div>
 
@@ -194,6 +204,7 @@ export const Navigation = () => {
                     <Route path="ConsultaRollosPorAlmacen" element={<ConsultaRollosPorAlmacen />} />
                     <Route path='DespachoImport' element = {<DespachoImport/>}/>
                     <Route path='ConsultaDespacho' element = {<ConsultaDespacho/>}/>
+                    <Route path='RecepcionFacturasCD' element={<RecepcionFacturasCDScreen />} />
                 </Routes>
             </div>
         </div>

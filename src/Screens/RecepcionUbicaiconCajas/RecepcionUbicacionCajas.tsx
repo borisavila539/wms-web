@@ -15,15 +15,13 @@ const RecepcionUbicacionCajas = () => {
 
 
   const [page, setPage] = useState<number>(0)
-  const [anio, setAnio] = useState<string>('')
   const [lote, setLote] = useState<string>('')
   const [orden, setOrden] = useState<string>('')
   const [articulo, setArticulo] = useState<string>('')
   const [talla, setTalla] = useState<string>('')
   const [ubicacion, setUbicacion] = useState<string>('')
   const [color, setColor] = useState<string>('')
-  //const [tipo, setTipo] = useState<boolean>(true)
-  const [Tipo, setTipo] = useState<{ key: string, value: string }[]>(
+  const [Tipo] = useState<{ key: string, value: string }[]>(
     [
       { key: 'DENIM', value: 'DENIM' },
       { key: 'TP', value: 'TP' },
@@ -62,7 +60,7 @@ const RecepcionUbicacionCajas = () => {
           setTotalPages(resp.data[0].paginas)
         })
 
-      if (tiposelected == "TP") {
+      if (tiposelected === "TP") {
         await WmSApi.post<ResumenCajasUnidadesTP[]>(`ResumenCajasUnidadesTP`, filtro)
           .then(resp => {
             setDataResumenTP(resp.data)
@@ -185,6 +183,8 @@ const RecepcionUbicacionCajas = () => {
 
   useEffect(() => {
     getData()
+    // Solo se debe re-consultar al cambiar de página; los demás filtros se aplican con el botón "Actualizar".
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page])
   return (
     <div>
@@ -310,7 +310,7 @@ const RecepcionUbicacionCajas = () => {
             min={1}
             max={totalPages + 1}
             step={1}
-            onChange={(e) => setPage(parseInt(e.target.value != '' ? e.target.value : '0') - 1)}
+            onChange={(e) => setPage(parseInt(e.target.value !== '' ? e.target.value : '0') - 1)}
             style={{
               padding: '8px',
               border: '1px solid #ccc',
@@ -321,7 +321,7 @@ const RecepcionUbicacionCajas = () => {
           <span>/{totalPages + 1}</span>
         </div>
         {
-          tiposelected == 'MB' &&
+          tiposelected === 'MB' &&
           <button
             onClick={abrir}
             disabled={sincronizando}
@@ -363,7 +363,7 @@ const RecepcionUbicacionCajas = () => {
           Actualizar
         </button>
         {
-          tiposelected == 'DENIM' &&
+          tiposelected === 'DENIM' &&
           <button
             onClick={sync}
             disabled={sincronizando}
@@ -405,7 +405,7 @@ const RecepcionUbicacionCajas = () => {
       </div>
       <div>
         {
-          tiposelected == "TP" && dataResumenTP.length > 0 &&
+          tiposelected === "TP" && dataResumenTP.length > 0 &&
           <div>
             <table border={1}>
               <thead>
@@ -430,45 +430,47 @@ const RecepcionUbicacionCajas = () => {
           </div>
         }
       </div>
-      <table {...getTableProps()} style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          {headerGroups.map(headerGroup => (
-            <tr {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map(column => (
-                <th
-                  {...column.getHeaderProps()}
-                  style={{ borderBottom: 'solid 3px red', background: 'aliceblue', padding: '10px' }}
-                >
-                  {column.render('Header')}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody {...getTableBodyProps()}>
-          {cargando ? (
-            <tr>
-              <td colSpan={columns.length} style={{ textAlign: 'center' }}> <div className="spinner"></div></td>
-            </tr>
-          ) : (
-            rows.map(row => {
-              prepareRow(row);
-              return (
-                <tr {...row.getRowProps()}>
-                  {row.cells.map(cell => (
-                    <td
-                      {...cell.getCellProps()}
-                      style={{ padding: '10px', border: 'solid 1px gray' }}
-                    >
-                      {cell.render('Cell')}
-                    </td>
-                  ))}
-                </tr>
-              );
-            })
-          )}
-        </tbody>
-      </table>
+      <div style={{ width: '100%', minWidth: 0, overflowX: 'auto' }}>
+        <table {...getTableProps()} style={{ width: '100%', minWidth: 'max-content', borderCollapse: 'collapse' }}>
+          <thead>
+            {headerGroups.map(headerGroup => (
+              <tr {...headerGroup.getHeaderGroupProps()}>
+                {headerGroup.headers.map(column => (
+                  <th
+                    {...column.getHeaderProps()}
+                    style={{ borderBottom: 'solid 3px red', background: 'aliceblue', padding: '10px', whiteSpace: 'nowrap' }}
+                  >
+                    {column.render('Header')}
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody {...getTableBodyProps()}>
+            {cargando ? (
+              <tr>
+                <td colSpan={columns.length} style={{ textAlign: 'center' }}> <div className="spinner"></div></td>
+              </tr>
+            ) : (
+              rows.map(row => {
+                prepareRow(row);
+                return (
+                  <tr {...row.getRowProps()}>
+                    {row.cells.map(cell => (
+                      <td
+                        {...cell.getCellProps()}
+                        style={{ padding: '10px', border: 'solid 1px gray', whiteSpace: 'nowrap' }}
+                      >
+                        {cell.render('Cell')}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

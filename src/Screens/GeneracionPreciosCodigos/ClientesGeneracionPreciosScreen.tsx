@@ -1,316 +1,291 @@
-
 import React, { useEffect, useMemo, useState } from 'react'
 import { WmSApi } from '../../api/WMSapi'
-import { useTable, Column } from 'react-table';
-import { ClientesGeneracionPrecio, ImpresionEtiquetaPrecio } from '../../interfaces/GeneracionPrecioCodigos/GeneracionPrecioCodigoInterface';
+import { ConfiguracionPrecioApi } from '../../api/ConfiguracionPrecioApi'
+import { ClientesGeneracionPrecio } from '../../interfaces/GeneracionPrecioCodigos/GeneracionPrecioCodigoInterface'
+import { HeaderGenerico, SeccionBusquedaAcciones, FiltrosGenericos, FiltroCampoTexto, TablaGenerica, ColumnConfig } from '../../Components'
+import { IcoSave, IcoX } from '../../Components/icons'
+// @ts-ignore
+import '../../Styles/TemplateGenericoScreen.css'
+
+const FILAS_POR_PAGINA = 15
+
+const CLIENTE_VACIO: ClientesGeneracionPrecio = { cuentaCliente: '', nombre: '', moneda: '', decimal: false }
+
+const CAMPOS_TEXTO_FILTRO: FiltroCampoTexto[] = [
+    { key: 'cuentaCliente', label: 'Cuenta Cliente', placeholder: 'Filtrar cuenta...' },
+    { key: 'nombre', label: 'Nombre', placeholder: 'Filtrar nombre...' },
+    { key: 'moneda', label: 'Moneda', placeholder: 'Filtrar moneda...' },
+]
 
 const ClientesGeneracionPreciosScreen = () => {
-    const [data, setData] = useState<ClientesGeneracionPrecio[]>([])
-    const [cargando, setCargando] = useState<boolean>(false)
-    const [edit, setEdit] = useState<boolean>(false)
-    const [Enviando, setEnviando] = useState<boolean>(false)
-    const [cuentaCliente, setCuentaCliente] = useState<string>('')
-    const [nombre, setNombre] = useState<string>('')
-    const [moneda, setMoneda] = useState<string>('')
-    const [decimal, setDecimal] = useState<boolean>(false)
+    const [clientes, setClientes] = useState<ClientesGeneracionPrecio[]>([])
+    const [cargando, setCargando] = useState(false)
+    const [guardando, setGuardando] = useState(false)
+    const [paginaActual, setPaginaActual] = useState(1)
+    const [mensaje, setMensaje] = useState<{ tipo: 'error' | 'success'; texto: string } | null>(null)
 
+    // ── Filtros por campo (Cuenta / Nombre / Moneda) ────────────────────────
+    const [valoresTexto, setValoresTexto] = useState<Record<string, string>>({})
 
+    // ── Modal de alta/edición ────────────────────────────────────────────────
+    const [itemEditando, setItemEditando] = useState<ClientesGeneracionPrecio | null>(null)
+    const [esNuevo, setEsNuevo] = useState(false)
 
     const getData = async () => {
         setCargando(true)
+        setMensaje(null)
         try {
-            await WmSApi.get<ClientesGeneracionPrecio[]>(`ObtenerClientesGeneracionPrecio`)
-                .then(resp => {
-                    setData(resp.data)
-                })
+            const resp = await ConfiguracionPrecioApi.getClientesGeneracionPrecio()
+            setClientes(resp.data)
         } catch (err) {
             console.log(err)
+            setMensaje({ tipo: 'error', texto: 'Error al conectar con el servidor.' })
         }
         setCargando(false)
     }
 
-    const getEnviar = async () => {
-        setEnviando(true)
-        try {
-            let tmp: ClientesGeneracionPrecio = {
-                cuentaCliente,
-                nombre,
-                moneda,
-                decimal
+    useEffect(() => { getData() }, [])
 
-            }
-            await WmSApi.post<ClientesGeneracionPrecio>(`ClientesGeneracionPrecio`, tmp)
-                .then(resp => {
-                    if (resp.data.cuentaCliente != '') {
-                        getData()
-                        Limpiar()
-                    }
-                })
-        } catch (err) {
-            console.log(err)
-        }
-        setEnviando(false)
-    }
-
-    const Limpiar = () => {
-        setCuentaCliente('')
-        setNombre('')
-        setMoneda('')
-        setDecimal(false)
-        setEdit(false)
-    }
-
-    const handleModificar = (row: ClientesGeneracionPrecio) => {
-        setCuentaCliente(row.cuentaCliente)
-        setNombre(row.nombre)
-        setMoneda(row.moneda)
-        setDecimal(row.decimal)
-        setEdit(true)
-
-    };
-    const columns: Column<ClientesGeneracionPrecio>[] = useMemo(
-        () => [
-            {
-                Header: 'Cuenta Cliente',
-                accessor: 'cuentaCliente',
-            },
-            {
-                Header: 'Nombre',
-                accessor: 'nombre',
-            },
-            {
-                Header: 'Moneda',
-                accessor: 'moneda',
-            },
-            {
-                Header: 'Decimal',
-                accessor: 'decimal',
-                Cell: ({ row }: { row: { original: ClientesGeneracionPrecio } }) => (
-                    <div>
-                        <input
-                            type="checkbox"
-                            checked={row.original.decimal}
-                            style={{ marginRight: '10px' }}
-                        />
-                    </div>
-                )
-            },
-            {
-                Header: 'Acciones',
-                Cell: ({ row }: { row: { original: ClientesGeneracionPrecio } }) => (
-                    <div>
-                        <button
-                            onClick={() => handleModificar(row.original)}
-                            style={{
-                                padding: '6px 12px',
-                                backgroundColor: '#007bff',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                marginRight: '8px',
-
-                            }}
-                        >
-                            Modificar
-                        </button>
-                    </div>
-                )
-            }
-        ], []
+    // ── Filtros por campo (Cuenta / Nombre / Moneda) ────────────────────────
+    const hayFiltrosActivos = useMemo(
+        () => Object.values(valoresTexto).some(v => (v || '').trim() !== ''),
+        [valoresTexto]
     )
 
-    const {
-        getTableProps,
-        getTableBodyProps,
-        headerGroups,
-        prepareRow,
-        rows,
-    } = useTable(
-        {
-            columns,
-            data
-        }
-    );
+    const handleTextoChange = (key: string, valor: string) => {
+        setValoresTexto(prev => ({ ...prev, [key]: valor }))
+        setPaginaActual(1)
+    }
 
-    useEffect(() => {
-        getData()
-    }, [])
-    return (
-        <div>
-            <h2 style={{ textAlign: 'center' }}>Clientes</h2>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px', gap: '10px' }}>
+    const handleLimpiarFiltros = () => {
+        setValoresTexto({})
+        setPaginaActual(1)
+    }
 
-                <div>
-                    <label htmlFor="cuentaCliente" style={{ marginRight: '10px' }}>Cuenta Cliente:</label>
-                    <input
-
-                        type="text"
-                        id="cuentaCliente"
-                        value={cuentaCliente}
-                        onChange={(e) => setCuentaCliente(e.target.value)}
-                        style={{
-                            padding: '8px',
-                            border: '1px solid #ccc',
-                            borderRadius: '4px',
-                            width: '100px',
-                        }}
-                        disabled={edit}
-                    />
-                </div>
-
-                <div>
-                    <label htmlFor="Nombre" style={{ marginRight: '10px' }}>Nombre:</label>
-                    <input
-                        type="text"
-                        id="Nombre"
-                        value={nombre}
-                        onChange={(e) => setNombre(e.target.value)}
-                        style={{
-                            padding: '8px',
-                            border: '1px solid #ccc',
-                            borderRadius: '4px',
-                            width: '100px',
-                        }}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="Moneda" style={{ marginRight: '10px' }}>Moneda:</label>
-                    <input
-                        type="text"
-                        id="Moneda"
-                        value={moneda}
-                        onChange={(e) => setMoneda(e.target.value)}
-                        style={{
-                            padding: '8px',
-                            border: '1px solid #ccc',
-                            borderRadius: '4px',
-                            width: '100px',
-                        }}
-                    />
-                </div>
-                <div style={{ padding: '10px' }}>
-                    <label>
-                        <input
-                            type="checkbox"
-                            checked={decimal}
-                            onChange={() => setDecimal(!decimal)}
-                            style={{ marginRight: '10px' }}
-                        />
-                        Decimal
-                    </label>
-                </div>
-                {
-                    cuentaCliente != '' && nombre != '' &&
-                    <button
-                        onClick={() => {
-
-                            getEnviar()
-                        }}
-                        style={{
-                            padding: '8px 16px',
-                            border: 'none',
-                            borderRadius: '4px',
-                            backgroundColor: '#007bff',
-                            color: 'white',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                        disabled={Enviando}
-                    >
-                        Agregar/Modificar
-                    </button>
+    const datosFiltrados = useMemo(() => {
+        return clientes.filter(c => {
+            for (const campo of CAMPOS_TEXTO_FILTRO) {
+                const val = valoresTexto[campo.key]
+                if (val && val.trim() !== '') {
+                    const itemValor = String((c as any)[campo.key] ?? '').toLowerCase()
+                    if (!itemValor.includes(val.toLowerCase().trim())) return false
                 }
+            }
+            return true
+        })
+    }, [clientes, valoresTexto])
 
-                <button
-                    onClick={() => {
-                        getData()
-                    }}
-                    disabled={cargando}
-                    style={{
-                        padding: '8px 16px',
-                        border: 'none',
-                        borderRadius: '4px',
-                        backgroundColor: cargando ? '#ccc' : '#007bff',
-                        color: 'white',
-                        cursor: cargando ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}
-                >
-                    Actualizar
-                </button>
-                <button
-                    onClick={() => {
+    const totalPaginas = Math.max(1, Math.ceil(datosFiltrados.length / FILAS_POR_PAGINA))
+    const datosPagina = useMemo(() => {
+        const inicio = (paginaActual - 1) * FILAS_POR_PAGINA
+        return datosFiltrados.slice(inicio, inicio + FILAS_POR_PAGINA)
+    }, [datosFiltrados, paginaActual])
 
-                        Limpiar()
-                    }}
-                    style={{
-                        padding: '8px 16px',
-                        border: 'none',
-                        borderRadius: '4px',
-                        backgroundColor: '#007bff',
-                        color: 'white',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}
-                >
-                    Limpiar
-                </button>
+    // ── Alta / edición ───────────────────────────────────────────────────────
+    const handleNuevo = () => {
+        setItemEditando({ ...CLIENTE_VACIO })
+        setEsNuevo(true)
+    }
 
+    const handleEditar = (item: ClientesGeneracionPrecio) => {
+        setItemEditando({ ...item })
+        setEsNuevo(false)
+    }
 
+    const handleGuardar = async (item: ClientesGeneracionPrecio) => {
+        setGuardando(true)
+        setMensaje(null)
+        try {
+            const resp = await WmSApi.post<ClientesGeneracionPrecio>('ClientesGeneracionPrecio', item)
+            if (resp.data && resp.data.cuentaCliente !== '') {
+                setMensaje({ tipo: 'success', texto: `Cliente "${resp.data.cuentaCliente}" guardado correctamente.` })
+                setItemEditando(null)
+                await getData()
+            } else {
+                setMensaje({ tipo: 'error', texto: 'No se pudo guardar el registro.' })
+            }
+        } catch (err) {
+            console.log(err)
+            setMensaje({ tipo: 'error', texto: 'Error al guardar el registro en el servidor.' })
+        }
+        setGuardando(false)
+    }
 
+    const columns: ColumnConfig<ClientesGeneracionPrecio>[] = [
+        { header: 'Cuenta Cliente', accessor: 'cuentaCliente', isId: true },
+        { header: 'Nombre', accessor: 'nombre' },
+        { header: 'Moneda', accessor: 'moneda' },
+        { header: 'Decimal', align: 'center', render: (item) => item.decimal ? 'Sí' : 'No' },
+    ]
 
+    return (
+        <div className="gen-page-root">
+            <div className="gen-container">
+                <HeaderGenerico
+                    titulo="Clientes de Generación de Precios"
+                    subtitulo="Cuentas de clientes utilizadas en la generación y configuración de precios."
+                    estado={cargando ? 'consultando' : clientes.length > 0 ? 'datos' : 'vacio'}
+                />
 
+                {mensaje && (
+                    <div className={`alert-box alert-${mensaje.tipo} fade-in`}>
+                        <span>{mensaje.texto}</span>
+                        <button className="alert-close" onClick={() => setMensaje(null)}><IcoX /></button>
+                    </div>
+                )}
+
+                <SeccionBusquedaAcciones
+                    onNuevoRegistro={handleNuevo}
+                    labelNuevo="Nuevo cliente"
+                    onRefrescar={getData}
+                    cargandoRefresco={cargando}
+                />
+
+                <FiltrosGenericos
+                    camposTexto={CAMPOS_TEXTO_FILTRO}
+                    valoresTexto={valoresTexto}
+                    valoresNum={{}}
+                    onTextoChange={handleTextoChange}
+                    onNumChange={() => {}}
+                    onLimpiar={handleLimpiarFiltros}
+                    hayFiltrosActivos={hayFiltrosActivos}
+                />
+
+                <TablaGenerica
+                    columns={columns}
+                    data={datosPagina}
+                    keyExtractor={(item) => item.cuentaCliente}
+                    paginaActual={paginaActual}
+                    totalPaginas={totalPaginas}
+                    totalRegistros={datosFiltrados.length}
+                    onPaginaChange={setPaginaActual}
+                    onEditItem={handleEditar}
+                    emptyMessage={cargando ? 'Consultando información...' : 'No hay clientes registrados.'}
+                />
             </div>
 
-            <table {...getTableProps()} style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                    {headerGroups.map(headerGroup => (
-                        <tr {...headerGroup.getHeaderGroupProps()}>
-                            {headerGroup.headers.map(column => (
-                                <th
-                                    {...column.getHeaderProps()}
-                                    style={{ borderBottom: 'solid 3px red', background: 'aliceblue', padding: '10px' }}
-                                >
-                                    {column.render('Header')}
-                                </th>
-                            ))}
-                        </tr>
-                    ))}
-                </thead>
-                <tbody {...getTableBodyProps()}>
-                    {cargando ? (
-                        <tr>
-                            <td colSpan={columns.length} style={{ textAlign: 'center' }}> <div className="spinner"></div></td>
-                        </tr>
-                    ) : (
-                        rows.map(row => {
-                            prepareRow(row);
-                            return (
-                                <tr {...row.getRowProps()}>
-                                    {row.cells.map(cell => (
-                                        <td
-                                            {...cell.getCellProps()}
-                                            style={{ padding: '10px', border: 'solid 1px gray', textAlign: 'center' }}
-                                        >
-                                            {cell.render('Cell')}
-                                        </td>
-                                    ))}
-                                </tr>
-                            );
-                        })
-                    )}
-                </tbody>
-            </table>
+            {itemEditando && (
+                <ModalCliente
+                    item={itemEditando}
+                    esNuevo={esNuevo}
+                    guardando={guardando}
+                    onGuardar={handleGuardar}
+                    onCerrar={() => setItemEditando(null)}
+                />
+            )}
         </div>
     )
 }
 
-export default ClientesGeneracionPreciosScreen;
+// ── Modal de alta/edición de cliente ──────────────────────────────────────────
+function ModalCliente({ item, esNuevo, guardando, onGuardar, onCerrar }: {
+    item: ClientesGeneracionPrecio
+    esNuevo: boolean
+    guardando: boolean
+    onGuardar: (item: ClientesGeneracionPrecio) => void
+    onCerrar: () => void
+}) {
+    const [form, setForm] = useState<ClientesGeneracionPrecio>({ ...item })
+    const [errores, setErrores] = useState<Partial<Record<keyof ClientesGeneracionPrecio, string>>>({})
 
+    const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (e.target === e.currentTarget) onCerrar()
+    }
+
+    const validar = () => {
+        const errs: Partial<Record<keyof ClientesGeneracionPrecio, string>> = {}
+        if (!form.cuentaCliente.trim()) errs.cuentaCliente = 'Requerido'
+        if (!form.nombre.trim()) errs.nombre = 'Requerido'
+        setErrores(errs)
+        return Object.keys(errs).length === 0
+    }
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
+        if (validar()) onGuardar(form)
+    }
+
+    return (
+        <div className="modal-overlay" onClick={handleOverlayClick}>
+            <div className="modal-panel" role="dialog" aria-modal="true" aria-labelledby="cliente-modal-titulo">
+                <div className="modal-header">
+                    <div>
+                        <h2 className="modal-titulo" id="cliente-modal-titulo">{esNuevo ? 'Nuevo cliente' : 'Editar cliente'}</h2>
+                        {!esNuevo && <p className="modal-subtitulo">{item.cuentaCliente}</p>}
+                    </div>
+                    <button className="modal-close" onClick={onCerrar} aria-label="Cerrar"><IcoX /></button>
+                </div>
+
+                <form onSubmit={handleSubmit} noValidate>
+                    <div className="modal-body">
+                        <div className="modal-grid">
+                            <div className={`modal-campo${errores.cuentaCliente ? ' modal-campo--error' : ''}`}>
+                                <label className="modal-label">
+                                    Cuenta Cliente<span className="modal-requerido">*</span>
+                                </label>
+                                <input
+                                    className="modal-input"
+                                    type="text"
+                                    value={form.cuentaCliente}
+                                    disabled={!esNuevo}
+                                    onChange={e => {
+                                        setForm(p => ({ ...p, cuentaCliente: e.target.value }))
+                                        setErrores(p => ({ ...p, cuentaCliente: undefined }))
+                                    }}
+                                />
+                                {errores.cuentaCliente && <span className="modal-error-msg">{errores.cuentaCliente}</span>}
+                            </div>
+
+                            <div className={`modal-campo${errores.nombre ? ' modal-campo--error' : ''}`}>
+                                <label className="modal-label">
+                                    Nombre<span className="modal-requerido">*</span>
+                                </label>
+                                <input
+                                    className="modal-input"
+                                    type="text"
+                                    value={form.nombre}
+                                    onChange={e => {
+                                        setForm(p => ({ ...p, nombre: e.target.value }))
+                                        setErrores(p => ({ ...p, nombre: undefined }))
+                                    }}
+                                />
+                                {errores.nombre && <span className="modal-error-msg">{errores.nombre}</span>}
+                            </div>
+
+                            <div className="modal-campo">
+                                <label className="modal-label">Moneda</label>
+                                <input
+                                    className="modal-input"
+                                    type="text"
+                                    value={form.moneda}
+                                    onChange={e => setForm(p => ({ ...p, moneda: e.target.value }))}
+                                />
+                            </div>
+
+                            <div className="modal-campo">
+                                <label className="modal-label">Decimal</label>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={form.decimal}
+                                        onChange={e => setForm(p => ({ ...p, decimal: e.target.checked }))}
+                                    />
+                                    <span style={{ fontSize: 13, color: '#334155' }}>Maneja decimales</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="modal-footer">
+                        <button type="button" className="btn-cancelar" onClick={onCerrar}>Cancelar</button>
+                        <button type="submit" className="btn-guardar" disabled={guardando}>
+                            <IcoSave /><span>{guardando ? 'Guardando...' : 'Guardar'}</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    )
+}
+
+export default ClientesGeneracionPreciosScreen

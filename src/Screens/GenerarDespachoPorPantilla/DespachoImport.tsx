@@ -1,5 +1,4 @@
 import React, { useState, ChangeEvent } from 'react';
-import axios from 'axios';
 import { DespachoResponse } from '../../interfaces/GeneracionDespachoPorPantilla/DespachoImoportInterface';
 import { WMSDespachoPTApi } from '../../api/WMSDespachoPTApi';
 // @ts-ignore

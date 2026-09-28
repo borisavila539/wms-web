@@ -1,0 +1,287 @@
+/* ============================================================
+   RecepcionFacturasCD — complementos de TemplateGenericoScreen
+   Prefijo rfc- para no chocar con otros módulos
+   ============================================================ */
+
+/* ===================== BARRA DE CONSULTA ===================== */
+.rfc-consulta-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.rfc-consulta-bar .gen-filtro-grupo input[type='date'] {
+  min-width: 150px;
+  font-family: inherit;
+  color: #1e293b;
+}
+
+.rfc-consulta-bar .gen-search-input-group {
+  min-width: 220px;
+}
+
+.rfc-btn-excluidas-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background-color: #eef2ff;
+  color: #4338ca;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.gen-btn-submit:disabled,
+.gen-btn-outline:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ===================== TARJETAS RESUMEN ===================== */
+.rfc-resumen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.rfc-kpi {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-left: 4px solid #4f46e5;
+}
+
+.rfc-kpi--si { border-left-color: #22c55e; }
+.rfc-kpi--no { border-left-color: #f59e0b; }
+.rfc-kpi--pct { border-left-color: #3b82f6; }
+
+.rfc-kpi__label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.rfc-kpi__valor {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.rfc-kpi__barra {
+  height: 6px;
+  border-radius: 3px;
+  background-color: #e2e8f0;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.rfc-kpi__barra-fill {
+  height: 100%;
+  background-color: #22c55e;
+  transition: width 0.3s ease;
+}
+
+/* ===================== SELECTOR DE ESTADO ===================== */
+.rfc-segmentado {
+  display: inline-flex;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.rfc-segmentado button {
+  border: none;
+  background: none;
+  padding: 6px 14px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.rfc-segmentado button:hover { color: #0f172a; }
+
+.rfc-segmentado button.rfc-segmentado--activo {
+  background-color: #ffffff;
+  color: #4f46e5;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* ===================== BADGES DE TABLA ===================== */
+.rfc-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.rfc-badge--si {
+  background-color: #f0fdf4;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+.rfc-badge--no {
+  background-color: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.rfc-badge--rack {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.rfc-sin-dato { color: #cbd5e1; }
+
+.rfc-dias--alerta {
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.rfc-btn-excluir-fila {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: none;
+  color: #94a3b8;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background-color 0.15s;
+}
+
+.gen-data-table tr:hover .rfc-btn-excluir-fila { opacity: 1; }
+.rfc-btn-excluir-fila:hover { background-color: #fef2f2; color: #dc2626; }
+.rfc-btn-excluir-fila:disabled { cursor: wait; }
+
+/* ===================== MODAL: CUENTAS EXCLUIDAS ===================== */
+.rfc-modal-panel {
+  max-width: 820px;
+  max-height: 92vh;
+}
+
+.rfc-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 20px;
+  overflow-y: auto;
+}
+
+.rfc-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rfc-seccion + .rfc-seccion {
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.rfc-seccion-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rfc-seccion-titulo {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.rfc-lista-total {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.rfc-alta-campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.rfc-alert-detalle {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 12px;
+}
+
+.rfc-lista-wrapper {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.rfc-lista-wrapper--seleccion {
+  max-height: 200px;
+}
+
+.rfc-lista-wrapper .gen-data-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.rfc-lista-wrapper .gen-data-table td.rfc-td-motivo {
+  white-space: normal !important;
+  min-width: 180px;
+  max-width: 280px;
+}
+
+.rfc-lista-wrapper .rfc-btn-excluir-fila { opacity: 1; }
+
+.rfc-col-check {
+  width: 36px;
+  text-align: center;
+}
+
+.rfc-col-check input {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  accent-color: #4f46e5;
+}
+
+.rfc-fila-seleccionable { cursor: pointer; }
+
+.gen-data-table tr.rfc-fila--marcada td { background-color: #eef2ff; }
+.gen-data-table tr.rfc-fila--marcada:hover td { background-color: #e0e7ff; }
+
+.gen-data-table td.rfc-empty-compacto {
+  padding: 22px 16px;
+  font-size: 13px;
+  white-space: normal !important;
+}
+
+@media (max-width: 640px) {
+  .rfc-alta-campos { grid-template-columns: 1fr; }
+}

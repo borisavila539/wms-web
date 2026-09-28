@@ -131,6 +131,8 @@ const TrackingPedidosScreen = () => {
 
     useEffect(() => {
         getData()
+        // Solo se debe re-consultar al cambiar de página; los demás filtros se aplican con el botón "Buscar".
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page])
     return (
         <div>
@@ -223,7 +225,7 @@ const TrackingPedidosScreen = () => {
                         min={1}
                         max={totalPages + 1}
                         step={1}
-                        onChange={(e) => setPage(parseInt(e.target.value != '' ? e.target.value : '0') - 1)}
+                        onChange={(e) => setPage(parseInt(e.target.value !== '' ? e.target.value : '0') - 1)}
                         style={{
                             padding: '8px',
                             border: '1px solid #ccc',
@@ -258,45 +260,47 @@ const TrackingPedidosScreen = () => {
                 </button>
 
             </div>
-            <table {...getTableProps()} style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                    {headerGroups.map(headerGroup => (
-                        <tr {...headerGroup.getHeaderGroupProps()}>
-                            {headerGroup.headers.map(column => (
-                                <th
-                                    {...column.getHeaderProps()}
-                                    style={{ borderBottom: 'solid 3px red', background: 'aliceblue', padding: '10px' }}
-                                >
-                                    {column.render('Header')}
-                                </th>
-                            ))}
-                        </tr>
-                    ))}
-                </thead>
-                <tbody {...getTableBodyProps()}>
-                    {cargando ? (
-                        <tr>
-                            <td colSpan={columns.length} style={{ textAlign: 'center' }}> <div className="spinner"></div></td>
-                        </tr>
-                    ) : (
-                        rows.map(row => {
-                            prepareRow(row);
-                            return (
-                                <tr {...row.getRowProps()}>
-                                    {row.cells.map(cell => (
-                                        <td
-                                            {...cell.getCellProps()}
-                                            style={{ padding: '10px', border: 'solid 1px gray' }}
-                                        >
-                                            {cell.render('Cell')}
-                                        </td>
-                                    ))}
-                                </tr>
-                            );
-                        })
-                    )}
-                </tbody>
-            </table>
+            <div style={{ width: '100%', minWidth: 0, overflowX: 'auto' }}>
+                <table {...getTableProps()} style={{ width: '100%', minWidth: 'max-content', borderCollapse: 'collapse' }}>
+                    <thead>
+                        {headerGroups.map(headerGroup => (
+                            <tr {...headerGroup.getHeaderGroupProps()}>
+                                {headerGroup.headers.map(column => (
+                                    <th
+                                        {...column.getHeaderProps()}
+                                        style={{ borderBottom: 'solid 3px red', background: 'aliceblue', padding: '10px', whiteSpace: 'nowrap' }}
+                                    >
+                                        {column.render('Header')}
+                                    </th>
+                                ))}
+                            </tr>
+                        ))}
+                    </thead>
+                    <tbody {...getTableBodyProps()}>
+                        {cargando ? (
+                            <tr>
+                                <td colSpan={columns.length} style={{ textAlign: 'center' }}> <div className="spinner"></div></td>
+                            </tr>
+                        ) : (
+                            rows.map(row => {
+                                prepareRow(row);
+                                return (
+                                    <tr {...row.getRowProps()}>
+                                        {row.cells.map(cell => (
+                                            <td
+                                                {...cell.getCellProps()}
+                                                style={{ padding: '10px', border: 'solid 1px gray', whiteSpace: 'nowrap' }}
+                                            >
+                                                {cell.render('Cell')}
+                                            </td>
+                                        ))}
+                                    </tr>
+                                );
+                            })
+                        )}
+                    </tbody>
+                </table>
+            </div>
         </div>
     )
 }

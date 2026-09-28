@@ -1,0 +1,98 @@
+/* ============================================================
+   ImpresionEtiquetaPreciosScreen — Extensiones específicas
+   Reutiliza las clases base de la plantilla (gen-), prefijo propio: iep-
+   ============================================================ */
+
+/* Fila seleccionada (reutiliza el mismo verde que el resto de pantallas) */
+.gen-data-table tr.gen-row-selected td {
+  background-color: #f0fdf4 !important;
+}
+
+/* Fila que requiere confirmación: no se puede seleccionar para imprimir */
+.gen-data-table tr.iep-row-pendiente td {
+  background-color: #fffbeb !important;
+  color: #92400e;
+}
+.gen-data-table tr.iep-row-pendiente:hover td {
+  background-color: #fef3c7 !important;
+}
+
+/* Badge de estado por fila */
+.iep-badge-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.iep-badge-estado--listo {
+  background-color: #f0fdf4;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+.iep-badge-estado--pendiente {
+  background-color: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.iep-precio-pendiente {
+  color: #b45309;
+  font-style: italic;
+  font-size: 12px;
+}
+
+/* Botón de imprimir: distinguirlo un poco del resto de botones primarios */
+.iep-btn-imprimir {
+  background-color: #16a34a !important;
+}
+.iep-btn-imprimir:hover:not(:disabled) {
+  background-color: #15803d !important;
+}
+.iep-btn-imprimir:disabled {
+  background-color: #f1f5f9 !important;
+  color: #94a3b8 !important;
+}
+
+/* Banner de mensajes (éxito / error) */
+.iep-mensaje {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  animation: gen-spin 0s; /* noop, mantiene consistencia con animaciones de la plantilla */
+}
+
+.iep-mensaje--error {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.iep-mensaje--success {
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+}
+
+.iep-mensaje-cerrar {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  font-size: 16px;
+  line-height: 1;
+  opacity: 0.6;
+}
+.iep-mensaje-cerrar:hover {
+  opacity: 1;
+}

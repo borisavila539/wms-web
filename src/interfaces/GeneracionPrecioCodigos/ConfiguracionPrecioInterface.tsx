@@ -27,7 +27,8 @@ export interface ConfiguracionPrecioItem {
   idColor: string;
   talla: string;
   costo: number;
-  precio: number;
+  precio: number;       // Precio en lempiras
+  precioDolar: number;  // Precio en dólares (opcional, 0 = sin precio). Se usa en tiendas con moneda DOLAR
   margen: number;
 }
 

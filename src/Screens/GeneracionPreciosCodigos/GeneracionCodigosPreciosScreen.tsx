@@ -270,7 +270,8 @@ export const GeneracionCodigosPreciosScreen = () => {
                 'Cantidad': r.cantidad,
                 'Costo AX': r.costoAX,
                 'Costo Config.': r.costoConfiguracionPrecio,
-                'Precio': r.precio,
+                'Precio Lempiras': r.precio,
+                'Precio Dolares': r.precioDolar ?? 0,
                 'Departamento': r.departamento,
                 'SubCategoría': r.subCategoria,
                 'Colección': formatColeccion(r.coleccion),
@@ -423,7 +424,8 @@ export const GeneracionCodigosPreciosScreen = () => {
                                     <th className="gen-col-num">Cantidad</th>
                                     <th className="gen-col-num">Costo AX</th>
                                     <th className="gen-col-num">Costo Config.</th>
-                                    <th className="gen-col-num">Precio</th>
+                                    <th className="gen-col-num">Precio Lempiras</th>
+                                    <th className="gen-col-num">Precio Dólares</th>
                                     <th>Departamento</th>
                                     <th>SubCategoría</th>
                                     <th>Colección</th>
@@ -478,6 +480,7 @@ export const GeneracionCodigosPreciosScreen = () => {
                                                         {item.precio}
                                                     </span>
                                                 </td>
+                                                <td className="gen-col-num">{item.precioDolar ?? 0}</td>
                                                 <td>{item.departamento}</td>
                                                 <td>{item.subCategoria}</td>
                                                 <td>{formatColeccion(item.coleccion)}</td>
@@ -499,7 +502,7 @@ export const GeneracionCodigosPreciosScreen = () => {
                                     })
                                 ) : (
                                     <tr>
-                                        <td colSpan={23} className="gen-empty-row">
+                                        <td colSpan={24} className="gen-empty-row">
                                             {cargando 
                                                 ? 'Cargando registros...' 
                                                 : data.length > 0 

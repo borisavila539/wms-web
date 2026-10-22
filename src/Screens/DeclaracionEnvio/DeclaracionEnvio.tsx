@@ -175,7 +175,8 @@ const DeclaracionEnvio = () => {
     return (
         <div>
             <h2 style={{ textAlign: 'center' }}>Declaracion Envio</h2>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px', gap: '10px' }}>
+            {/* flexWrap: sin él, en pantallas angostas los filtros se desbordan a la izquierda (fuera del alcance del scroll) */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '10px', gap: '10px' }}>
                 <div>
                     <label htmlFor="caja" style={{ marginRight: '10px' }}>Caja:</label>
                     <input

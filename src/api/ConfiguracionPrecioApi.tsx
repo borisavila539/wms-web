@@ -4,6 +4,7 @@ import { ConfiguracionPrecioImportResponse, ConfiguracionPrecioItem, SingleInser
 import { GeneracionPrecioCodigoInterface, ImpresionEtiquetaPrecio, ImpresionPreciosBusquedaForm, ImpresionPreciosSeleccionRequest, ClientesGeneracionPrecio } from '../interfaces/GeneracionPrecioCodigos/GeneracionPrecioCodigoInterface';
 import { RespuestaSP, TallaConfiguracionPrecioDto } from '../interfaces/GeneracionPrecioCodigos/TallaConfiguracionPrecioInterface';
 import { CategoriaPorClienteBaseDto } from '../interfaces/GeneracionPrecioCodigos/CategoriaPorClienteBaseInterface';
+import { TiendaGeneracionPrecioDto } from '../interfaces/GeneracionPrecioCodigos/TiendaGeneracionPrecioInterface';
 const api = axios.create({
     baseURL: ConfiguracionPrecioUrl
 });
@@ -69,6 +70,19 @@ export const ConfiguracionPrecioApi = {
 
     deleteTallaConfiguracionPrecio: (id: number) =>
         api.post<RespuestaSP>(`DeleteTallaConfiguracionPrecio/${id}`),
+
+    // ── Tiendas (moneda por dirección de entrega) ───────────────────────────
+    getTiendasGeneracionPrecio: () =>
+        api.get<TiendaGeneracionPrecioDto[]>('GetTiendasGeneracionPrecio'),
+
+    insertTiendaGeneracionPrecio: (item: TiendaGeneracionPrecioDto) =>
+        api.post<RespuestaSP>('InsertTiendaGeneracionPrecio', item),
+
+    updateTiendaGeneracionPrecio: (item: TiendaGeneracionPrecioDto) =>
+        api.post<RespuestaSP>('UpdateTiendaGeneracionPrecio', item),
+
+    deleteTiendaGeneracionPrecio: (id: number) =>
+        api.post<RespuestaSP>(`DeleteTiendaGeneracionPrecio/${id}`),
 
     // GET: Categoría / Subcategoría / Colección históricas por Cliente + Base
     obtenerCategoriaPorClienteBase: (cuentaCliente: string, base: string, empresa?: string) =>

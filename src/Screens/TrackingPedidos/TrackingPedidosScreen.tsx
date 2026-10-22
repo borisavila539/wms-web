@@ -137,7 +137,8 @@ const TrackingPedidosScreen = () => {
     return (
         <div>
             <h2 style={{ textAlign: 'center' }}>Tracking Pedidos</h2>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px', gap: '10px' }}>
+            {/* flexWrap: sin él, en pantallas angostas los filtros se desbordan a la izquierda (fuera del alcance del scroll) */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '20px', gap: '10px' }}>
 
                 <div>
                     <label htmlFor="cuentaCliente" style={{ marginRight: '10px' }}>Cuenta Cliente:</label>

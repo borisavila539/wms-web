@@ -43,7 +43,7 @@ export function ModalEdicion({
     }, [onCerrar]);
 
     // Manejador numérico individual por campo (sin recálculo automático)
-    const cambiarNum = (campo: 'costo' | 'precio' | 'margen') => (e: ChangeEvent<HTMLInputElement>) => {
+    const cambiarNum = (campo: 'costo' | 'precio' | 'precioDolar' | 'margen') => (e: ChangeEvent<HTMLInputElement>) => {
         const raw = e.target.value;
         const val = parseFloat(raw);
         setForm(prev => ({
@@ -68,6 +68,7 @@ export function ModalEdicion({
         if (!form.talla.trim()) errs.talla = 'Requerido';
         if (form.costo < 0) errs.costo = 'Debe ser ≥ 0';
         if (form.precio <= 0) errs.precio = 'Debe ser > 0';
+        if ((form.precioDolar ?? 0) < 0) errs.precioDolar = 'Debe ser ≥ 0';
         setErrores(errs);
         return Object.keys(errs).length === 0;
     };
@@ -181,7 +182,7 @@ export function ModalEdicion({
                             </div>
 
                             <div className={`modal-campo${errores.precio ? ' modal-campo--error' : ''}`}>
-                                <label className="modal-label">Precio<span className="modal-requerido">*</span></label>
+                                <label className="modal-label">Precio Lempiras<span className="modal-requerido">*</span></label>
                                 <input
                                     className="modal-input modal-input--num"
                                     type="number"
@@ -191,6 +192,19 @@ export function ModalEdicion({
                                     onChange={cambiarNum('precio')}
                                 />
                                 {errores.precio && <span className="modal-error-msg">{errores.precio}</span>}
+                            </div>
+
+                            <div className={`modal-campo${errores.precioDolar ? ' modal-campo--error' : ''}`}>
+                                <label className="modal-label">Precio Dólares</label>
+                                <input
+                                    className="modal-input modal-input--num"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={form.precioDolar ?? 0}
+                                    onChange={cambiarNum('precioDolar')}
+                                />
+                                {errores.precioDolar && <span className="modal-error-msg">{errores.precioDolar}</span>}
                             </div>
 
                             <div className={`modal-campo${errores.margen ? ' modal-campo--error' : ''}`}>
@@ -206,7 +220,7 @@ export function ModalEdicion({
                             </div>
                         </div>
 
-                        {(item.id !== 0 && (item.costo !== form.costo || item.precio !== form.precio || item.margen !== form.margen)) && (
+                        {(item.id !== 0 && (item.costo !== form.costo || item.precio !== form.precio || (item.precioDolar ?? 0) !== (form.precioDolar ?? 0) || item.margen !== form.margen)) && (
                             <div className="modal-comparativa">
                                 <p className="modal-comparativa-titulo">Cambios respecto al valor original</p>
                                 <div className="modal-comparativa-fila">
@@ -222,12 +236,22 @@ export function ModalEdicion({
                                     )}
                                     {item.precio !== form.precio && (
                                         <div className="modal-comparativa-item">
-                                            <span className="modal-comparativa-campo">Precio</span>
+                                            <span className="modal-comparativa-campo">Precio Lempiras</span>
                                             <span className="modal-comparativa-ant">{item.precio.toFixed(2)}</span>
                                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2">
                                                 <path d="M5 12h14M12 5l7 7-7 7" />
                                             </svg>
                                             <span className="modal-comparativa-nvo">{form.precio.toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    {(item.precioDolar ?? 0) !== (form.precioDolar ?? 0) && (
+                                        <div className="modal-comparativa-item">
+                                            <span className="modal-comparativa-campo">Precio Dólares</span>
+                                            <span className="modal-comparativa-ant">{(item.precioDolar ?? 0).toFixed(2)}</span>
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2">
+                                                <path d="M5 12h14M12 5l7 7-7 7" />
+                                            </svg>
+                                            <span className="modal-comparativa-nvo">{(form.precioDolar ?? 0).toFixed(2)}</span>
                                         </div>
                                     )}
                                     {item.margen !== form.margen && (

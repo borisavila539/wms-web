@@ -29,6 +29,8 @@ import { ConfiguracionPrecioApi } from '../../api/ConfiguracionPrecioApi';
 import './ConfiguracionPrecioCodigosScreen.css';
 import { ModalEdicion } from './ModalEdicionConfiguracionPrecioScreen';
 import { GestionTallasModal } from './GestionTallasModal';
+import { GestionTiendasModal } from './GestionTiendasModal';
+import { IcoStore } from '../../interfaces/GeneracionPrecioCodigos/TiendaGeneracionPrecioInterface';
 import { TallaInfoHover } from './TallaInfoHover';
 import { TallaConfiguracionPrecioDto, IcoRuler } from '../../interfaces/GeneracionPrecioCodigos/TallaConfiguracionPrecioInterface';
 import { CategoriaClienteBaseModal } from './CategoriaClienteBaseModal';
@@ -50,7 +52,7 @@ function computeDiff(anterior: ConfiguracionPrecioItem[], nuevo: ConfiguracionPr
         const k = rowKey(n)
         const a = mapAnt.get(k) ?? null
         if (a) {
-            const changed = a.costo !== n.costo || a.precio !== n.precio || a.margen.toFixed(2) !== n.margen.toFixed(2)
+            const changed = a.costo !== n.costo || a.precio !== n.precio || (a.precioDolar ?? 0) !== (n.precioDolar ?? 0) || a.margen.toFixed(2) !== n.margen.toFixed(2)
             rows.push({ status: changed ? 'modificado' : 'sin-cambios', anterior: a, nuevo: n })
         } else {
             rows.push({ status: 'nuevo', anterior: null, nuevo: n })
@@ -118,11 +120,12 @@ export default function ConfiguracionPrecioCodigosScreen() {
     const [diffPagina, setDiffPagina] = useState(1)
 
     const [duplicatesGroups, setDuplicatesGroups] = useState<Array<{ key: string, rows: ConfiguracionPrecioItem[] }>>([])
-    const nuevoItemVacio: ConfiguracionPrecioItem = {id: 0, categoria: '', cuenta: '', coleccion: '', subcategoria: '', base: '', idColor: '', talla: '', costo: 0, precio: 0, margen: 0 }
+    const nuevoItemVacio: ConfiguracionPrecioItem = {id: 0, categoria: '', cuenta: '', coleccion: '', subcategoria: '', base: '', idColor: '', talla: '', costo: 0, precio: 0, precioDolar: 0, margen: 0 }
 
     // ── Tallas configuradas (Género / Talla / Tipo) ──────────────────────────
     const [tallasConfiguradas, setTallasConfiguradas] = useState<TallaConfiguracionPrecioDto[]>([])
     const [mostrarGestionTallas, setMostrarGestionTallas] = useState(false)
+    const [mostrarGestionTiendas, setMostrarGestionTiendas] = useState(false)
 
     // ── Consulta de Categoría / Subcategoría / Colección por Cliente + Base ──
     const [mostrarBuscadorCategoria, setMostrarBuscadorCategoria] = useState(false)
@@ -418,7 +421,8 @@ export default function ConfiguracionPrecioCodigosScreen() {
                 IdColor: r.idColor,
                 Talla: r.talla,
                 Costo: r.costo,
-                Precio: r.precio,
+                'Precio Lempiras': r.precio,
+                'Precio Dolares': r.precioDolar ?? 0,
                 Margen: r.margen,
             }))
 
@@ -653,6 +657,14 @@ export default function ConfiguracionPrecioCodigosScreen() {
 
                                 <button
                                     className="btn-outline"
+                                    onClick={() => setMostrarGestionTiendas(true)}
+                                    title="Ver y administrar las tiendas y su moneda (Lempiras / Dólares)"
+                                >
+                                    <IcoStore /><span>Tiendas</span>
+                                </button>
+
+                                <button
+                                    className="btn-outline"
                                     onClick={() => setMostrarBuscadorCategoria(true)}
                                     title="Consultar Categoría / Subcategoría / Colección por Cliente + Base"
                                 >
@@ -748,7 +760,8 @@ export default function ConfiguracionPrecioCodigosScreen() {
                                         <th>IdColor</th>
                                         <th>Talla</th>
                                         <th className="col-num">Costo</th>
-                                        <th className="col-num">Precio</th>
+                                        <th className="col-num">Precio Lempiras</th>
+                                        <th className="col-num">Precio Dólares</th>
                                         <th className="col-num">Margen</th>
                                         <th className="col-acciones"></th>
                                     </tr>
@@ -767,6 +780,7 @@ export default function ConfiguracionPrecioCodigosScreen() {
                                                 <td><TallaInfoHover talla={item.talla} tallas={tallasConfiguradas} /></td>
                                                 <td className="col-num">{item.costo.toFixed(2)}</td>
                                                 <td className="col-num">{item.precio.toFixed(2)}</td>
+                                                <td className="col-num">{(item.precioDolar ?? 0).toFixed(2)}</td>
                                                 <td className="col-num">{item.margen.toFixed(2)}</td>
                                                 <td className="col-acciones">
                                                     <button
@@ -781,7 +795,7 @@ export default function ConfiguracionPrecioCodigosScreen() {
                                         )
                                     }) : (
                                         <tr>
-                                            <td colSpan={11} className="empty-row">
+                                            <td colSpan={12} className="empty-row">
                                                 {datosDB.length === 0
                                                     ? 'No hay datos en base de datos.'
                                                     : 'No hay resultados con los filtros aplicados.'}
@@ -895,7 +909,8 @@ export default function ConfiguracionPrecioCodigosScreen() {
                                                         <th>Categoría</th><th>Cuenta</th><th>Colección</th><th>Subcategoría</th>
                                                         <th>Base / Color / Talla</th>
                                                         <th className="col-num">Costo</th>
-                                                        <th className="col-num">Precio</th>
+                                                        <th className="col-num">Precio Lempiras</th>
+                                                        <th className="col-num">Precio Dólares</th>
                                                         <th className="col-num">Margen</th>
                                                     </tr>
                                                 </thead>
@@ -912,6 +927,7 @@ export default function ConfiguracionPrecioCodigosScreen() {
                                                                 <td className="td-secundario">{d.base} / {d.idColor} / {d.talla}</td>
                                                                 <td className="col-num">{d.costo.toFixed(2)}</td>
                                                                 <td className="col-num">{d.precio.toFixed(2)}</td>
+                                                                <td className="col-num">{(d.precioDolar ?? 0).toFixed(2)}</td>
                                                                 <td className="col-num">{d.margen.toFixed(2)}</td>
                                                                 <td className="col-acciones">
                                                                     <button className="btn-editar-fila" title="Editar fila importada" onClick={() => handleAbrirEdicionImport(d, idxInImport)}>
@@ -938,7 +954,8 @@ export default function ConfiguracionPrecioCodigosScreen() {
                                             <th>Categoría</th><th>Cuenta</th><th>Colección</th>
                                             <th>Subcategoría</th><th>Base</th><th>IdColor</th><th>Talla</th>
                                             <th className="col-num">Costo</th>
-                                            <th className="col-num">Precio</th>
+                                            <th className="col-num">Precio Lempiras</th>
+                                            <th className="col-num">Precio Dólares</th>
                                             <th className="col-num">Margen</th>
                                         </tr>
                                     </thead>
@@ -956,6 +973,7 @@ export default function ConfiguracionPrecioCodigosScreen() {
                                                     <td>{item.talla}</td>
                                                     <td className="col-num">{item.costo.toFixed(2)}</td>
                                                     <td className="col-num">{item.precio.toFixed(2)}</td>
+                                                    <td className="col-num">{(item.precioDolar ?? 0).toFixed(2)}</td>
                                                     <td className="col-num">{item.margen.toFixed(2)}</td>
                                                 </tr>
                                             ))}
@@ -971,28 +989,29 @@ export default function ConfiguracionPrecioCodigosScreen() {
                                             <th>Subcategoría</th>
                                             <th>Base / Color / Talla</th>
                                             <th className="col-num">Costo</th>
-                                            <th className="col-num">Precio</th>
+                                            <th className="col-num">Precio Lempiras</th>
+                                            <th className="col-num">Precio Dólares</th>
                                             <th className="col-num">Margen</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {diffVisible.length === 0 ? (
-                                            <tr><td colSpan={9} className="empty-row">No hay filas con este filtro.</td></tr>
+                                            <tr><td colSpan={10} className="empty-row">No hay filas con este filtro.</td></tr>
                                         ) : diffVisible.map((row, i) => {
                                             const src = row.nuevo ?? row.anterior!
                                             const ant = row.anterior
                                             const nvo = row.nuevo
 
-                                            const NumCell = ({ field }: { field: 'costo' | 'precio' | 'margen' }) => {
-                                                if (row.status === 'modificado' && ant && nvo && ant[field] !== nvo[field]) {
+                                            const NumCell = ({ field }: { field: 'costo' | 'precio' | 'precioDolar' | 'margen' }) => {
+                                                if (row.status === 'modificado' && ant && nvo && (ant[field] ?? 0) !== (nvo[field] ?? 0)) {
                                                     return (
                                                         <div className="val-par">
-                                                            <span className="val-anterior">{ant[field].toFixed(2)}</span>
-                                                            <span className="val-nuevo">{nvo[field].toFixed(2)}</span>
+                                                            <span className="val-anterior">{(ant[field] ?? 0).toFixed(2)}</span>
+                                                            <span className="val-nuevo">{(nvo[field] ?? 0).toFixed(2)}</span>
                                                         </div>
                                                     )
                                                 }
-                                                return <>{(nvo ?? ant)![field].toFixed(2)}</>
+                                                return <>{((nvo ?? ant)![field] ?? 0).toFixed(2)}</>
                                             }
 
                                             return (
@@ -1010,6 +1029,7 @@ export default function ConfiguracionPrecioCodigosScreen() {
                                                     <td className="td-secundario">{src.base} / {src.idColor} / {src.talla}</td>
                                                     <td className="col-num"><NumCell field="costo" /></td>
                                                     <td className="col-num"><NumCell field="precio" /></td>
+                                                    <td className="col-num"><NumCell field="precioDolar" /></td>
                                                     <td className="col-num"><NumCell field="margen" /></td>
                                                 </tr>
                                             )
@@ -1067,6 +1087,9 @@ export default function ConfiguracionPrecioCodigosScreen() {
                 onCerrar={() => setMostrarGestionTallas(false)}
                 onCambio={setTallasConfiguradas}
             />
+        )}
+        {mostrarGestionTiendas && (
+            <GestionTiendasModal onCerrar={() => setMostrarGestionTiendas(false)} />
         )}
         {mostrarBuscadorCategoria && (
             <CategoriaClienteBaseModal

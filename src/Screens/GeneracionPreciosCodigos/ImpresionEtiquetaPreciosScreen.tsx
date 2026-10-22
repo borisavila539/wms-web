@@ -58,6 +58,15 @@ const CAMPOS_SELECT_FILTRO: FiltroCampoSelect[] = [
             { value: 'PENDIENTE', label: 'Requiere confirmación' },
         ],
     },
+    {
+        key: 'moneda',
+        label: 'Moneda',
+        opciones: [
+            { value: 'TODAS', label: 'Todas' },
+            { value: 'LEMPIRAS', label: 'Lempiras' },
+            { value: 'DOLAR', label: 'Dólares' },
+        ],
+    },
 ];
 
 const IcoPrint = () => (
@@ -84,6 +93,7 @@ const ImpresionEtiquetaPreciosScreen = () => {
     // Filtros de refinamiento (sobre los datos ya consultados)
     const [valoresTexto, setValoresTexto] = useState<Record<string, string>>({});
     const [filtroEstado, setFiltroEstado] = useState<string>('TODOS');
+    const [filtroMoneda, setFiltroMoneda] = useState<string>('TODAS');
 
     // Paginación
     const [paginaActual, setPaginaActual] = useState<number>(1);
@@ -144,6 +154,7 @@ const ImpresionEtiquetaPreciosScreen = () => {
         setBusqueda(initialImpresionPreciosBusqueda);
         setValoresTexto({});
         setFiltroEstado('TODOS');
+        setFiltroMoneda('TODAS');
         setData([]);
         setSeleccionados(new Set());
         setMensaje(null);
@@ -155,13 +166,15 @@ const ImpresionEtiquetaPreciosScreen = () => {
 
     // ── Filtros de refinamiento (cliente) ──────────────────────────────────────
     const hayFiltrosActivos = useMemo(
-        () => Object.values(valoresTexto).some(v => (v ?? '').trim() !== '') || filtroEstado !== 'TODOS',
-        [valoresTexto, filtroEstado]
+        () => Object.values(valoresTexto).some(v => (v ?? '').trim() !== '') || filtroEstado !== 'TODOS' || filtroMoneda !== 'TODAS',
+        [valoresTexto, filtroEstado, filtroMoneda]
     );
 
     const datosFiltrados = useMemo(() => data.filter(item => {
         if (filtroEstado === 'LISTO' && item.requiereConfirmacion) return false;
         if (filtroEstado === 'PENDIENTE' && !item.requiereConfirmacion) return false;
+        // Las tiendas no registradas vienen como LEMPIRAS desde el SP
+        if (filtroMoneda !== 'TODAS' && (item.monedaTienda || 'LEMPIRAS') !== filtroMoneda) return false;
 
         for (const campo of CAMPOS_TEXTO_FILTRO) {
             const val = valoresTexto[campo.key];
@@ -171,9 +184,9 @@ const ImpresionEtiquetaPreciosScreen = () => {
             }
         }
         return true;
-    }), [data, valoresTexto, filtroEstado]);
+    }), [data, valoresTexto, filtroEstado, filtroMoneda]);
 
-    const handleLimpiarFiltros = () => { setValoresTexto({}); setFiltroEstado('TODOS'); setPaginaActual(1); }
+    const handleLimpiarFiltros = () => { setValoresTexto({}); setFiltroEstado('TODOS'); setFiltroMoneda('TODAS'); setPaginaActual(1); }
 
     // ── Paginación ────────────────────────────────────────────────────────────
     const totalPaginas = Math.max(1, Math.ceil(datosFiltrados.length / FILAS_POR_PAGINA));
@@ -388,10 +401,14 @@ const ImpresionEtiquetaPreciosScreen = () => {
                         camposSelect={CAMPOS_SELECT_FILTRO}
                         valoresTexto={valoresTexto}
                         valoresNum={{}}
-                        valoresSelect={{ estado: filtroEstado }}
+                        valoresSelect={{ estado: filtroEstado, moneda: filtroMoneda }}
                         onTextoChange={(key, valor) => { setValoresTexto(prev => ({ ...prev, [key]: valor })); setPaginaActual(1); }}
                         onNumChange={() => { }}
-                        onSelectChange={(key, valor) => { if (key === 'estado') setFiltroEstado(valor); setPaginaActual(1); }}
+                        onSelectChange={(key, valor) => {
+                            if (key === 'estado') setFiltroEstado(valor);
+                            if (key === 'moneda') setFiltroMoneda(valor);
+                            setPaginaActual(1);
+                        }}
                         onLimpiar={handleLimpiarFiltros}
                         hayFiltrosActivos={hayFiltrosActivos}
                     />
@@ -414,6 +431,7 @@ const ImpresionEtiquetaPreciosScreen = () => {
                                     <th>Estado</th>
                                     <th>Cliente</th>
                                     <th>Caja</th>
+                                    <th>Tienda</th>
                                     <th>Código Barra</th>
                                     <th>Artículo</th>
                                     <th>Descripción</th>
@@ -421,13 +439,14 @@ const ImpresionEtiquetaPreciosScreen = () => {
                                     <th>Talla</th>
                                     <th>Color</th>
                                     <th className="gen-col-num">Precio</th>
+                                    <th>Moneda</th>
                                     <th className="gen-col-num">Cantidad</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {cargando ? (
                                     <tr>
-                                        <td colSpan={12} className="gen-empty-row">Consultando información...</td>
+                                        <td colSpan={14} className="gen-empty-row">Consultando información...</td>
                                     </tr>
                                 ) : datosPaginados.length > 0 ? (
                                     datosPaginados.map(item => {
@@ -449,7 +468,9 @@ const ImpresionEtiquetaPreciosScreen = () => {
                                                         onChange={() => handleToggleSeleccion(item)}
                                                         title={
                                                             item.requiereConfirmacion ? 'Requiere confirmación antes de poder imprimirse' :
-                                                            item.precio <= 0 ? 'No se puede imprimir: el artículo no tiene precio' :
+                                                            item.precio <= 0 ? (item.monedaTienda === 'DOLAR'
+                                                                ? 'No se puede imprimir: el artículo no tiene precio en dólares'
+                                                                : 'No se puede imprimir: el artículo no tiene precio') :
                                                             undefined
                                                         }
                                                     />
@@ -465,6 +486,7 @@ const ImpresionEtiquetaPreciosScreen = () => {
                                                 </td>
                                                 <td>{item.nombre}</td>
                                                 <td className="gen-td-id">{item.imiB_BOXCODE}</td>
+                                                <td>{item.tienda || <span className="iep-precio-pendiente">Sin tienda</span>}</td>
                                                 <td>{item.codigoBarra}</td>
                                                 <td>{item.articulo}</td>
                                                 <td>{item.descripcion}</td>
@@ -480,13 +502,14 @@ const ImpresionEtiquetaPreciosScreen = () => {
                                                         item.precio.toFixed(2)
                                                     )}
                                                 </td>
+                                                <td>{item.monedaTienda === 'DOLAR' ? 'Dólares' : 'Lempiras'}</td>
                                                 <td className="gen-col-num">{item.qty}</td>
                                             </tr>
                                         );
                                     })
                                 ) : (
                                     <tr>
-                                        <td colSpan={12} className="gen-empty-row">
+                                        <td colSpan={14} className="gen-empty-row">
                                             {data.length > 0
                                                 ? 'No se encontraron registros que coincidan con los filtros aplicados.'
                                                 : 'No hay registros para mostrar. Ingresa pedido, ruta, caja o fecha para consultar.'}

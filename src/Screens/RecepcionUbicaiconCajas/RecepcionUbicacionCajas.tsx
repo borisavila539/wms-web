@@ -189,8 +189,9 @@ const RecepcionUbicacionCajas = () => {
   return (
     <div>
       <h2 style={{ textAlign: 'center' }}>Recepcion Ubicacion Cajas</h2>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px', gap: '10px' }}>
-        <div style={{ padding: '20px' }}>
+      {/* flexWrap: sin él, en pantallas angostas los filtros se desbordan a la izquierda (fuera del alcance del scroll) */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '20px', gap: '10px' }}>
+        <div>
           <label>
             <select
               name='Tipo'

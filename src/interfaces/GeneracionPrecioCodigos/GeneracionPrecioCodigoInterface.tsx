@@ -16,7 +16,8 @@ export interface GeneracionPrecioCodigoInterface {
     cantidad: number;
     costoAX: number;                      // Nuevo
     costoConfiguracionPrecio: number;     // Nuevo
-    precio: number;
+    precio: number;                       // Precio en lempiras
+    precioDolar: number;                  // Precio en dólares (0 = sin precio)
     departamento: string;
     subCategoria: string;
     tieneIrregularidad: boolean;          // Nuevo estado de la fila
@@ -45,7 +46,11 @@ export interface ImpresionEtiquetaPrecio{
   qty: number,
   imiB_BOXCODE:string,
   /** Indica si la línea aún no tiene precio confirmado; mientras sea true no se permite seleccionarla para imprimir. */
-  requiereConfirmacion: boolean
+  requiereConfirmacion: boolean,
+  /** Tienda según la dirección de entrega de la ruta de la caja (vacío si no está registrada). */
+  tienda: string,
+  /** LEMPIRAS | DOLAR. Si es DOLAR, `precio` ya viene en dólares. */
+  monedaTienda: string
 }
 
 export interface ClientesGeneracionPrecio{

@@ -94,12 +94,15 @@ export const initialImpresionPreciosFiltros: ImpresionPreciosFiltros = {
 export type LineaImpresionPrecioSeleccionada = ImpresionEtiquetaPrecio;
 
 /**
- * Payload propuesto para el endpoint de impresión selectiva (pendiente de implementar en el backend,
- * ver ImpresionPrecioCodigosSeleccionados). El endpoint actual `ImpresionPrecioCodigos` solo reimprime
- * todo lo que coincide con los filtros de búsqueda, no admite una lista puntual de líneas.
+ * Payload de ImpresionPrecioCodigosSeleccionados. pedido/ruta/caja son el criterio de la última
+ * búsqueda: el backend vuelve a consultar con ellos y solo imprime si las líneas siguen confirmadas
+ * y con precio (no confía en requiereConfirmacion/precio que manda el navegador).
  */
 export interface ImpresionPreciosSeleccionRequest {
   impresora: string;
   fecha: string;
+  pedido: string;
+  ruta: string;
+  caja: string;
   lineas: LineaImpresionPrecioSeleccionada[];
 }

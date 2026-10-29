@@ -80,6 +80,8 @@ const ImpresionEtiquetaPreciosScreen = () => {
     const [cargando, setCargando] = useState<boolean>(false)
     const [imprimiendo, setImprimiendo] = useState<boolean>(false)
     const [busqueda, setBusqueda] = useState<ImpresionPreciosBusquedaForm>(initialImpresionPreciosBusqueda);
+    // Criterio con el que se cargaron los datos actuales; se manda al imprimir para que el backend revalide
+    const [busquedaConsultada, setBusquedaConsultada] = useState<ImpresionPreciosBusquedaForm>(initialImpresionPreciosBusqueda);
     const [impresoras, setImpresoras] = useState<ImpresorasInterface[]>([])
     const [impresora, setImpresora] = useState<string>('')
     const [mensaje, setMensaje] = useState<{ tipo: 'error' | 'success'; texto: string } | null>(null)
@@ -137,9 +139,11 @@ const ImpresionEtiquetaPreciosScreen = () => {
         setCargando(true)
         setMensaje(null)
         try {
-            await ConfiguracionPrecioApi.GetPrecioCodigos(busqueda)
+            const criterio = { ...busqueda }
+            await ConfiguracionPrecioApi.GetPrecioCodigos(criterio)
                 .then(resp => {
                     setData(resp.data)
+                    setBusquedaConsultada(criterio)
                     setSeleccionados(new Set())
                     setPaginaActual(1)
                 })
@@ -152,6 +156,7 @@ const ImpresionEtiquetaPreciosScreen = () => {
 
     const Limpiar = () => {
         setBusqueda(initialImpresionPreciosBusqueda);
+        setBusquedaConsultada(initialImpresionPreciosBusqueda);
         setValoresTexto({});
         setFiltroEstado('TODOS');
         setFiltroMoneda('TODAS');
@@ -250,6 +255,9 @@ const ImpresionEtiquetaPreciosScreen = () => {
             const payload: ImpresionPreciosSeleccionRequest = {
                 impresora,
                 fecha: busqueda.fecha,
+                pedido: busquedaConsultada.pedido,
+                ruta: busquedaConsultada.ruta,
+                caja: busquedaConsultada.caja,
                 lineas: lineasSeleccionadas,
             };
             await ConfiguracionPrecioApi.ImpresionPrecioCodigosSeleccionados(payload)

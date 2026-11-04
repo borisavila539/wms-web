@@ -19,6 +19,7 @@ import '../Navigation/Navigation.css';
 import { DespachoImport } from '../Screens/GenerarDespachoPorPantilla/DespachoImport';
 import ConsultaDespacho from '../Screens/ConsultarDespacho/ConsultaDespacho';
 import RecepcionFacturasCDScreen from '../Screens/RecepcionFacturasCD/RecepcionFacturasCDScreen';
+import AuditoriaInternaDashboardScreen from '../Screens/AuditoriaInterna/AuditoriaInternaDashboardScreen';
 
 export const Navigation = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -180,6 +181,15 @@ export const Navigation = () => {
                             Recepción Facturas en CD
                         </Link>
                     </li>
+                    <li>
+                        <Link
+                            to="AuditoriaInterna"
+                            onClick={toggleSidebar}
+                            className={location.pathname === '/Menu/AuditoriaInterna' ? 'active' : ''}
+                        >
+                            Auditoría Interna de Cajas
+                        </Link>
+                    </li>
                 </ul>
             </div>
 
@@ -205,6 +215,7 @@ export const Navigation = () => {
                     <Route path='DespachoImport' element = {<DespachoImport/>}/>
                     <Route path='ConsultaDespacho' element = {<ConsultaDespacho/>}/>
                     <Route path='RecepcionFacturasCD' element={<RecepcionFacturasCDScreen />} />
+                    <Route path='AuditoriaInterna' element={<AuditoriaInternaDashboardScreen />} />
                 </Routes>
             </div>
         </div>

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react'
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import * as XLSX from 'xlsx'
 import { WMSContext } from '../../Context/WMSContext'
 import { ClipboardCheck, RefreshCw } from 'lucide-react'
@@ -23,6 +23,14 @@ const FILAS_POR_PAGINA = 15
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 
 type Vista = 'historial' | 'pendientes'
+type PorFecha = 'RECEPCION' | 'AUDITORIA'
+
+// Fecha sin hora (las recepciones de AX no traen hora)
+const formatearFecha = (valor: string | null) => {
+    if (!valor) return ''
+    const d = new Date(valor)
+    return isNaN(d.getTime()) ? '' : d.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
 
 const aISODate = (d: Date) => {
     const mm = String(d.getMonth() + 1).padStart(2, '0')
@@ -41,26 +49,24 @@ const rangoFechas = (anio: number, mes: number, dia: number) => {
 const numero = (v: number) => v.toLocaleString('es-HN')
 const porcentaje = (v: number) => `${v.toLocaleString('es-HN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`
 
-// Total de un grupo de lineas, con cobertura y exactitud recalculadas (no promediadas)
+// Total de un grupo de lineas, con cobertura y exactitud recalculadas (no promediadas).
+// Cobertura = auditadas de las recibidas / recibidas.
 const totalGrupo = (filas: DashboardContratista[], linea: string): DashboardContratista => {
-    const t = filas.reduce((a, c) => ({
-        ...a,
-        cajasEnviadas: a.cajasEnviadas + c.cajasEnviadas,
-        cajasEnviadasAuditadas: a.cajasEnviadasAuditadas + c.cajasEnviadasAuditadas,
-        cajasAuditadas: a.cajasAuditadas + c.cajasAuditadas,
-        cajasConDiferencia: a.cajasConDiferencia + c.cajasConDiferencia,
-        unidadesEsperadas: a.unidadesEsperadas + c.unidadesEsperadas,
-        unidadesEscaneadas: a.unidadesEscaneadas + c.unidadesEscaneadas,
-        unidadesFaltantes: a.unidadesFaltantes + c.unidadesFaltantes,
-        unidadesSobrantes: a.unidadesSobrantes + c.unidadesSobrantes,
-    }), {
-        origen: filas[0]?.origen ?? '', linea, cajasEnviadas: 0, cajasEnviadasAuditadas: 0, cobertura: 0, cajasAuditadas: 0,
-        cajasConDiferencia: 0, unidadesEsperadas: 0, unidadesEscaneadas: 0, unidadesFaltantes: 0, unidadesSobrantes: 0, exactitud: 0,
-    })
+    const sumables: (keyof DashboardContratista)[] = [
+        'cajasEnviadas', 'unidadesEnviadas', 'cajasRecibidas', 'unidadesRecibidas', 'cajasRecibidasAuditadas',
+        'cajasAuditadas', 'cajasConDiferencia', 'cajasDiferenciaEtiqueta', 'unidadesEsperadas', 'unidadesEscaneadas',
+        'unidadesFaltantes', 'unidadesSobrantes', 'unidadesDiferenciaEtiqueta',
+    ]
+    const t: DashboardContratista = {
+        origen: filas[0]?.origen ?? '', linea, cajasEnviadas: 0, unidadesEnviadas: 0, cajasRecibidas: 0, unidadesRecibidas: 0,
+        cajasRecibidasAuditadas: 0, cobertura: 0, cajasAuditadas: 0, cajasConDiferencia: 0, cajasDiferenciaEtiqueta: 0,
+        unidadesEsperadas: 0, unidadesEscaneadas: 0, unidadesFaltantes: 0, unidadesSobrantes: 0, unidadesDiferenciaEtiqueta: 0, exactitud: 0,
+    }
+    filas.forEach(c => sumables.forEach(k => { (t[k] as number) += c[k] as number }))
     const diferencias = t.unidadesFaltantes + t.unidadesSobrantes
     return {
         ...t,
-        cobertura: t.cajasEnviadas === 0 ? 0 : 100 * t.cajasEnviadasAuditadas / t.cajasEnviadas,
+        cobertura: t.cajasRecibidas === 0 ? 0 : 100 * t.cajasRecibidasAuditadas / t.cajasRecibidas,
         exactitud: t.unidadesEsperadas === 0 ? 0 : Math.max(0, 100 * (1 - diferencias / t.unidadesEsperadas)),
     }
 }
@@ -84,8 +90,14 @@ const AuditoriaInternaDashboardScreen = () => {
     const [cargando, setCargando] = useState(false)
     const [mensaje, setMensaje] = useState<string | null>(null)
     const [vista, setVista] = useState<Vista>('historial')
+    // La tabla de cajas va por fecha de recepcion (igual que el resumen) o por fecha de auditoria
+    const [porFecha, setPorFecha] = useState<PorFecha>('RECEPCION')
+    const [cargandoCajas, setCargandoCajas] = useState(false)
     const [busqueda, setBusqueda] = useState('')
     const [categoria, setCategoria] = useState('')
+    // Filtro por linea de la tabla de abajo ('' = todas); se pone desde el resumen por linea
+    const [linea, setLinea] = useState('')
+    const barraTabla = useRef<HTMLDivElement>(null)
     const [paginaActual, setPaginaActual] = useState(1)
     const [cajaDetalle, setCajaDetalle] = useState<number | null>(null)
 
@@ -93,7 +105,15 @@ const AuditoriaInternaDashboardScreen = () => {
     const diasMes = mes === 0 ? 0 : new Date(anio, mes, 0).getDate()
     const rango = rangoFechas(anio, mes, Math.min(dia, diasMes))
 
+    // Cada consulta lleva un numero: si el usuario cambia el filtro antes de que responda,
+    // la respuesta vieja se descarta (si no, una consulta lenta pisa a la nueva)
+    const consultaActual = useRef(0)
+    // La tabla de cajas tambien se consulta sola (al cambiar la fecha de la tabla)
+    const consultaCajas = useRef(0)
+
     const getData = async () => {
+        const consulta = ++consultaActual.current
+        const consultaTabla = ++consultaCajas.current
         setCargando(true)
         setMensaje(null)
         try {
@@ -101,20 +121,53 @@ const AuditoriaInternaDashboardScreen = () => {
                 AuditoriaInternaApi.getResumen(rango.ini, rango.fin),
                 AuditoriaInternaApi.getPorContratista(rango.ini, rango.fin),
                 AuditoriaInternaApi.getPorDia(rango.ini, rango.fin),
-                AuditoriaInternaApi.getCajas(rango.ini, rango.fin),
+                AuditoriaInternaApi.getCajas(rango.ini, rango.fin, porFecha),
                 AuditoriaInternaApi.getPendientes(rango.ini, rango.fin),
             ])
+            if (consulta !== consultaActual.current) return
             setResumen(r.data)
             setContratistas(c.data)
             setPorDia(d.data)
-            setCajas(cj.data)
+            if (consultaTabla === consultaCajas.current) setCajas(cj.data)
             setPendientes(p.data)
             setPaginaActual(1)
         } catch (err: any) {
+            if (consulta !== consultaActual.current) return
             console.log(err)
             setMensaje(err.response?.data?.message || 'Error al conectar con el servidor.')
         }
         setCargando(false)
+    }
+
+    const getCajas = async (modo: PorFecha) => {
+        const consulta = ++consultaCajas.current
+        setCargandoCajas(true)
+        try {
+            const cj = await AuditoriaInternaApi.getCajas(rango.ini, rango.fin, modo)
+            if (consulta !== consultaCajas.current) return
+            setCajas(cj.data)
+            setPaginaActual(1)
+        } catch (err: any) {
+            if (consulta !== consultaCajas.current) return
+            console.log(err)
+            setMensaje(err.response?.data?.message || 'Error al conectar con el servidor.')
+        }
+        setCargandoCajas(false)
+    }
+
+    const cambiarPorFecha = (modo: PorFecha) => {
+        setPorFecha(modo)
+        setCajas([])
+        getCajas(modo)
+    }
+
+    // Desde el resumen por linea: muestra las cajas recibidas de esa linea que faltan por auditar
+    const verPendientesLinea = (l: string) => {
+        setLinea(l)
+        setBusqueda('')
+        setVista('pendientes')
+        setPaginaActual(1)
+        barraTabla.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
 
     useEffect(() => { getData() }, [anio, mes, dia]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -139,21 +192,28 @@ const AuditoriaInternaDashboardScreen = () => {
         [cajas]
     )
 
+    // Lineas del periodo (mismo orden que el resumen por linea)
+    const lineas = useMemo(() => contratistas.map(c => c.linea), [contratistas])
+
     const cajasFiltradas = useMemo(() => {
         const q = busqueda.trim().toLowerCase()
         return cajas.filter(c => {
             if (categoria && (c.categoriaInterna || 'Sin categoría') !== categoria) return false
+            if (linea && c.linea !== linea) return false
             if (!q) return true
             return [c.op, c.numeroCaja, c.articulo, c.estilo, c.linea, c.contratista, c.categoriaInterna, c.plDespacho, c.usuarioInicio, c.resultado]
                 .join(' ').toLowerCase().includes(q)
         })
-    }, [cajas, busqueda, categoria])
+    }, [cajas, busqueda, categoria, linea])
 
     const pendientesFiltrados = useMemo(() => {
         const q = busqueda.trim().toLowerCase()
-        if (!q) return pendientes
-        return pendientes.filter(p => [p.op, p.numeroCaja, p.linea, p.contratista, p.origen, p.estado].join(' ').toLowerCase().includes(q))
-    }, [pendientes, busqueda])
+        return pendientes.filter(p => {
+            if (linea && p.linea !== linea) return false
+            if (!q) return true
+            return [p.op, p.numeroCaja, p.linea, p.contratista, p.origen, p.estado].join(' ').toLowerCase().includes(q)
+        })
+    }, [pendientes, busqueda, linea])
 
     const datosVista: any[] = vista === 'historial' ? cajasFiltradas : pendientesFiltrados
     const totalPaginas = Math.max(1, Math.ceil(datosVista.length / FILAS_POR_PAGINA))
@@ -169,6 +229,7 @@ const AuditoriaInternaDashboardScreen = () => {
         { header: 'Esperado', accessor: 'cantidadEsperada', align: 'right' },
         { header: 'Escaneado', accessor: 'cantidadEscaneada', align: 'right' },
         { header: 'Dif.', align: 'right', render: c => <span className={c.diferencia !== 0 ? 'ai-num--alerta' : ''}>{c.diferencia > 0 ? `+${c.diferencia}` : c.diferencia}</span> },
+        { header: 'Etiq.', align: 'right', render: c => c.diferenciaEtiqueta > 0 ? <span className="ai-num--aviso" title="Prendas con otra etiqueta en la misma talla">{c.diferenciaEtiqueta}</span> : <span className="ai-sin-dato">—</span> },
         {
             header: 'Resultado', align: 'center', render: c => {
                 const r = etiquetaResultado(c.estado, c.resultado)
@@ -176,7 +237,8 @@ const AuditoriaInternaDashboardScreen = () => {
             }
         },
         { header: 'Auditor', accessor: 'usuarioInicio' },
-        { header: 'Cierre', render: c => formatearFechaHora(c.fechaCierre) || <span className="ai-sin-dato">—</span> },
+        { header: 'Recibida', render: c => formatearFecha(c.fechaRecepcion) || <span className="ai-sin-dato" title="No se encontró la recepción en el CD">—</span> },
+        { header: 'Auditada', render: c => formatearFechaHora(c.fechaCierre) || <span className="ai-sin-dato">En proceso</span> },
         { header: 'Min.', align: 'right', render: c => c.minutos ?? '' },
         {
             header: '', align: 'center', render: c => (
@@ -190,7 +252,9 @@ const AuditoriaInternaDashboardScreen = () => {
         { header: 'Caja', accessor: 'numeroCaja', align: 'right' },
         { header: 'Origen', render: p => p.origen === 'PLANTA' ? 'Planta' : 'Contratista' },
         { header: 'Línea', render: p => p.linea },
+        { header: 'Uds.', align: 'right', render: p => numero(p.unidades) },
         { header: 'Enviada', render: p => formatearFechaHora(p.fechaEnvio) },
+        { header: 'Recibida', render: p => formatearFechaHora(p.fechaRecepcion) },
         {
             header: 'Estado', align: 'center', render: p =>
                 <span className={`ai-badge ai-badge--${p.estado === 'EN PROCESO' ? 'proceso' : 'pendiente'}`}>{p.estado === 'EN PROCESO' ? 'En proceso' : 'Sin auditar'}</span>
@@ -201,23 +265,27 @@ const AuditoriaInternaDashboardScreen = () => {
     const handleExportar = () => {
         const wb = XLSX.utils.book_new()
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(contratistas.map(c => ({
-            'Origen': c.origen, 'Linea': c.linea, 'Cajas enviadas': c.cajasEnviadas,
-            'Enviadas auditadas': c.cajasEnviadasAuditadas, 'Cobertura %': c.cobertura, 'Cajas auditadas': c.cajasAuditadas,
-            'Con diferencia': c.cajasConDiferencia, 'Unid. esperadas': c.unidadesEsperadas, 'Unid. escaneadas': c.unidadesEscaneadas,
-            'Faltantes': c.unidadesFaltantes, 'Sobrantes': c.unidadesSobrantes, 'Exactitud %': c.exactitud,
+            'Origen': c.origen, 'Linea': c.linea, 'Cajas enviadas': c.cajasEnviadas, 'Unid. enviadas': c.unidadesEnviadas,
+            'Cajas recibidas': c.cajasRecibidas, 'Unid. recibidas': c.unidadesRecibidas, 'Recibidas auditadas': c.cajasRecibidasAuditadas,
+            'Cobertura % (recibidas)': c.cobertura, 'Cajas auditadas': c.cajasAuditadas,
+            'Con diferencia': c.cajasConDiferencia, 'Con dif. etiquetas': c.cajasDiferenciaEtiqueta,
+            'Unid. esperadas': c.unidadesEsperadas, 'Unid. escaneadas': c.unidadesEscaneadas,
+            'Faltantes': c.unidadesFaltantes, 'Sobrantes': c.unidadesSobrantes, 'Unid. dif. etiquetas': c.unidadesDiferenciaEtiqueta,
+            'Exactitud %': c.exactitud,
         }))), 'Por linea')
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cajas.map(c => ({
             'OP': c.op, 'Caja': c.numeroCaja, 'Estado': c.estado, 'Resultado': c.resultado ?? '', 'Validacion': c.modoValidacion,
             'Origen': c.origen, 'Linea': c.linea, 'Contratista': c.contratista ?? '', 'Conjunto': c.conjunto ?? '', 'Categoria': c.categoriaInterna ?? '',
             'Articulo': c.articulo, 'Estilo': c.estilo ?? '', 'Color': c.colorDescripcion ?? '', 'Lote': c.lote ?? '',
             'Calidad': c.categoriaCaja ?? '', 'PL': c.plDespacho ?? '', 'Esperado': c.cantidadEsperada, 'Escaneado': c.cantidadEscaneada,
-            'Diferencia': c.diferencia, 'Observaciones': c.observaciones ?? '', 'Auditor': c.usuarioInicio,
+            'Diferencia': c.diferencia, 'Dif. etiquetas': c.diferenciaEtiqueta, 'Observaciones': c.observaciones ?? '',
+            'Enviada': formatearFechaHora(c.fechaEnvio), 'Recibida': formatearFecha(c.fechaRecepcion), 'Auditor': c.usuarioInicio,
             'Inicio': formatearFechaHora(c.fechaInicio), 'Cerro': c.usuarioCierre ?? '', 'Cierre': formatearFechaHora(c.fechaCierre),
             'Minutos': c.minutos ?? '', 'Rechazos': c.rechazos,
-        }))), 'Cajas auditadas')
+        }))), porFecha === 'RECEPCION' ? 'Cajas auditadas (recepcion)' : 'Cajas auditadas (auditoria)')
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pendientes.map(p => ({
             'OP': p.op, 'Caja': p.numeroCaja, 'Origen': p.origen, 'Linea': p.linea, 'Contratista': p.contratista ?? '',
-            'Enviada': formatearFechaHora(p.fechaEnvio), 'Estado': p.estado,
+            'Unidades': p.unidades, 'Enviada': formatearFechaHora(p.fechaEnvio), 'Recibida': formatearFechaHora(p.fechaRecepcion), 'Estado': p.estado,
         }))), 'Pendientes')
         XLSX.writeFile(wb, `AuditoriaInterna_${rango.ini.replace(/-/g, '')}_${rango.fin.replace(/-/g, '')}.xlsx`)
     }
@@ -235,7 +303,7 @@ const AuditoriaInternaDashboardScreen = () => {
             <div className="gen-container">
                 <HeaderGenerico
                     titulo="Auditoría Interna de Cajas"
-                    subtitulo="Cobertura, exactitud y diferencias de las cajas auditadas en el CD (planta y contratistas)."
+                    subtitulo="Por fecha de recepción en el CD: cobertura, exactitud y diferencias de lo recibido, aunque se haya auditado otro día (planta y contratistas)."
                     icono={<ClipboardCheck size={20} />}
                     estado={estadoHeader}
                 />
@@ -271,6 +339,11 @@ const AuditoriaInternaDashboardScreen = () => {
                             </select>
                         </div>
                         <span className="ai-rango">{rango.ini === rango.fin ? rango.ini : `${rango.ini} a ${rango.fin}`}</span>
+                        {resumen?.universoActualizado && (
+                            <span className="ai-rango" title="Envíos y recepciones se recalculan cada 10 minutos como máximo; las auditorías se ven al momento.">
+                                Envíos y recepciones al {new Date(resumen.universoActualizado).toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                        )}
                         <button className="gen-btn-submit gen-action-spacer" onClick={getData} disabled={cargando}>
                             {cargando ? <Spinner size={15} /> : <RefreshCw size={15} />}
                             <span>{cargando ? 'Consultando…' : 'Actualizar'}</span>
@@ -289,12 +362,19 @@ const AuditoriaInternaDashboardScreen = () => {
                             <span className="ai-kpi__label">Cobertura de auditoría</span>
                             <span className="ai-kpi__valor">{porcentaje(resumen.cobertura)}</span>
                             <div className="ai-kpi__barra"><div style={{ width: `${Math.min(100, resumen.cobertura)}%` }} /></div>
-                            <span className="ai-kpi__nota">{numero(resumen.cajasEnviadasAuditadas)} de {numero(resumen.cajasEnviadas)} cajas enviadas</span>
+                            <span className="ai-kpi__nota">{numero(resumen.cajasRecibidasAuditadas)} de {numero(resumen.cajasRecibidas)} cajas recibidas</span>
                         </div>
                         <div className="ai-kpi">
-                            <span className="ai-kpi__label">Cajas pendientes de auditar</span>
+                            <span className="ai-kpi__label">Cajas recibidas en el CD</span>
+                            <span className="ai-kpi__valor">{numero(resumen.cajasRecibidas)}</span>
+                            <span className="ai-kpi__nota">
+                                {numero(resumen.unidadesRecibidas)} uds · de {numero(resumen.cajasEnviadas)} enviadas ({numero(resumen.unidadesEnviadas)} uds)
+                            </span>
+                        </div>
+                        <div className="ai-kpi">
+                            <span className="ai-kpi__label">Pendientes de auditar</span>
                             <span className="ai-kpi__valor">{numero(resumen.cajasPendientes)}</span>
-                            <span className="ai-kpi__nota">{numero(resumen.cajasEnProceso)} en proceso (abiertas)</span>
+                            <span className="ai-kpi__nota">recibidas sin auditar · {numero(resumen.cajasEnProceso)} en proceso</span>
                         </div>
                         <div className="ai-kpi">
                             <span className="ai-kpi__label">Cajas auditadas</span>
@@ -314,6 +394,11 @@ const AuditoriaInternaDashboardScreen = () => {
                             <span className="ai-kpi__label">Unidades sobrantes</span>
                             <span className={`ai-kpi__valor ${resumen.unidadesSobrantes > 0 ? 'ai-num--alerta' : ''}`}>{numero(resumen.unidadesSobrantes)}</span>
                         </div>
+                        <div className="ai-kpi" title="Prendas de la misma talla con una etiqueta distinta a la registrada en empaque. Las unidades sí están: no cuentan en la exactitud.">
+                            <span className="ai-kpi__label">Diferencia de etiquetas</span>
+                            <span className={`ai-kpi__valor ${resumen.unidadesDiferenciaEtiqueta > 0 ? 'ai-num--aviso' : ''}`}>{numero(resumen.unidadesDiferenciaEtiqueta)}</span>
+                            <span className="ai-kpi__nota">uds en {numero(resumen.cajasDiferenciaEtiqueta)} cajas · no cuentan como error</span>
+                        </div>
                     </div>
                 )}
 
@@ -332,30 +417,46 @@ const AuditoriaInternaDashboardScreen = () => {
                                         <tr>
                                             <th>Línea</th>
                                             <th className="ai-num">Enviadas</th>
+                                            <th className="ai-num">Recibidas</th>
                                             <th>Cobertura</th>
                                             <th className="ai-num">Auditadas</th>
                                             <th className="ai-num">Faltantes</th>
                                             <th className="ai-num">Sobrantes</th>
+                                            <th className="ai-num" title="Unidades con etiqueta distinta a la registrada en empaque">Dif. etiq.</th>
                                             <th>Exactitud</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {gruposLinea.length === 0 && <tr><td colSpan={7} className="ai-sin-dato">Sin datos en el periodo.</td></tr>}
+                                        {gruposLinea.length === 0 && <tr><td colSpan={9} className="ai-sin-dato">Sin datos en el periodo.</td></tr>}
                                         {gruposLinea.map(g => {
-                                            const fila = (c: DashboardContratista, clase = '') => (
+                                            const fila = (c: DashboardContratista, clase = '') => {
+                                                // Recibidas sin auditoria cerrada (sin auditar + en proceso); el subtotal no lleva enlace
+                                                const faltan = c.cajasRecibidas - c.cajasRecibidasAuditadas
+                                                return (
                                                 <tr key={`${g.clave}-${c.linea}`} className={clase}>
                                                     <td>{c.linea}</td>
-                                                    <td className="ai-num">{numero(c.cajasEnviadas)}</td>
-                                                    <td>{barra(c.cobertura)}</td>
-                                                    <td className="ai-num">{numero(c.cajasAuditadas)}</td>
+                                                    <td className="ai-num">{numero(c.cajasEnviadas)}<small className="ai-uds">{numero(c.unidadesEnviadas)} uds</small></td>
+                                                    <td className="ai-num">{numero(c.cajasRecibidas)}<small className="ai-uds">{numero(c.unidadesRecibidas)} uds</small></td>
+                                                    <td>
+                                                        {barra(c.cobertura)}
+                                                        {faltan > 0 && !clase && (
+                                                            <button className="ai-link-pendientes" onClick={() => verPendientesLinea(c.linea)}
+                                                                title={`Ver las cajas recibidas de ${c.linea} que faltan por auditar`}>
+                                                                {numero(faltan)} {faltan === 1 ? 'pendiente' : 'pendientes'}
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                    <td className="ai-num">{numero(c.cajasAuditadas)}<small className="ai-uds">{numero(c.unidadesEscaneadas)} uds</small></td>
                                                     <td className={`ai-num ${c.unidadesFaltantes > 0 ? 'ai-num--alerta' : ''}`}>{numero(c.unidadesFaltantes)}</td>
                                                     <td className={`ai-num ${c.unidadesSobrantes > 0 ? 'ai-num--alerta' : ''}`}>{numero(c.unidadesSobrantes)}</td>
+                                                    <td className={`ai-num ${c.unidadesDiferenciaEtiqueta > 0 ? 'ai-num--aviso' : ''}`}>{numero(c.unidadesDiferenciaEtiqueta)}</td>
                                                     <td>{c.cajasAuditadas > 0 ? barra(c.exactitud) : <span className="ai-sin-dato">—</span>}</td>
                                                 </tr>
-                                            )
+                                                )
+                                            }
                                             return (
                                                 <React.Fragment key={g.clave}>
-                                                    <tr className="ai-grupo"><td colSpan={7}>{g.titulo}</td></tr>
+                                                    <tr className="ai-grupo"><td colSpan={9}>{g.titulo}</td></tr>
                                                     {g.filas.map(c => fila(c))}
                                                     {g.filas.length > 1 && fila(totalGrupo(g.filas, g.total), 'ai-subtotal')}
                                                 </React.Fragment>
@@ -369,17 +470,31 @@ const AuditoriaInternaDashboardScreen = () => {
                 )}
 
                 {/* Historial / pendientes */}
-                <div className="ai-barra-tabla">
+                <div className="ai-barra-tabla" ref={barraTabla}>
                     <div className="ai-segmentado" role="tablist">
                         {([
-                            ['historial', `Cajas auditadas (${numero(cajas.length)})`],
-                            ['pendientes', `Pendientes de auditar (${numero(resumen ? resumen.cajasPendientes : pendientes.length)})`],
+                            // Con una linea elegida, los contadores son de esa linea
+                            ['historial', `Cajas auditadas (${numero(linea ? cajas.filter(c => c.linea === linea).length : cajas.length)})`],
+                            ['pendientes', `Pendientes de auditar (${numero(linea ? pendientes.filter(p => p.linea === linea).length
+                                : resumen ? resumen.cajasPendientes : pendientes.length)})`],
                         ] as [Vista, string][]).map(([valor, texto]) => (
                             <button key={valor} role="tab" aria-selected={vista === valor}
                                 className={vista === valor ? 'ai-segmentado--activo' : ''}
                                 onClick={() => { setVista(valor); setPaginaActual(1) }}>{texto}</button>
                         ))}
                     </div>
+                    {vista === 'historial' && (
+                        <select
+                            className="ai-select-categoria"
+                            aria-label="Fecha de la tabla"
+                            title="Recepción: las cajas recibidas en el periodo (cuadra con el resumen). Auditoría: las cajas auditadas en el periodo."
+                            value={porFecha}
+                            onChange={e => cambiarPorFecha(e.target.value as PorFecha)}
+                        >
+                            <option value="RECEPCION">Por fecha de recepción</option>
+                            <option value="AUDITORIA">Por fecha de auditoría</option>
+                        </select>
+                    )}
                     {vista === 'historial' && (
                         <select
                             className="ai-select-categoria"
@@ -391,6 +506,16 @@ const AuditoriaInternaDashboardScreen = () => {
                             {categorias.map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
                     )}
+                    <select
+                        className="ai-select-categoria"
+                        aria-label="Línea"
+                        value={linea}
+                        onChange={e => { setLinea(e.target.value); setPaginaActual(1) }}
+                    >
+                        <option value="">Todas las líneas</option>
+                        {linea && !lineas.includes(linea) && <option value={linea}>{linea}</option>}
+                        {lineas.map(l => <option key={l} value={l}>{l}</option>)}
+                    </select>
                     {vista === 'pendientes' && pendientes.length >= 5000 && (
                         <span className="ai-nota-limite">Se muestran las 5,000 más recientes; reduzca el periodo para ver todas.</span>
                     )}
@@ -415,7 +540,8 @@ const AuditoriaInternaDashboardScreen = () => {
                         totalPaginas={totalPaginas}
                         totalRegistros={cajasFiltradas.length}
                         onPaginaChange={setPaginaActual}
-                        emptyMessage={cargando ? 'Consultando información...' : 'No hay cajas auditadas en el periodo.'}
+                        emptyMessage={cargando || cargandoCajas ? 'Consultando información...'
+                            : porFecha === 'RECEPCION' ? 'No hay cajas auditadas de lo recibido en el periodo.' : 'No hay cajas auditadas en el periodo.'}
                     />
                 ) : (
                     <TablaGenerica

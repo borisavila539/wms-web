@@ -1,17 +1,26 @@
+// Cobertura y pendientes son sobre lo RECIBIDO en el CD; enviadas es informativo
 export interface DashboardResumen {
     cajasEnviadas: number
-    cajasEnviadasAuditadas: number
+    unidadesEnviadas: number
+    cajasRecibidas: number
+    unidadesRecibidas: number
+    cajasSinRecibir: number
+    cajasRecibidasAuditadas: number
     cobertura: number
     cajasPendientes: number
     cajasEnProceso: number
     cajasAuditadas: number
     cajasConDiferencia: number
+    cajasDiferenciaEtiqueta: number
     unidadesEsperadas: number
     unidadesEscaneadas: number
     unidadesFaltantes: number
     unidadesSobrantes: number
+    unidadesDiferenciaEtiqueta: number
     exactitud: number
     minutosPromedioCaja: number
+    // Envios y recepciones salen de un cache que se recalcula cada 10 minutos como maximo
+    universoActualizado: string | null
 }
 
 // Una fila por linea: planta propia (Denim PEPE, MB, Serigrafía) o contratista externo
@@ -19,14 +28,19 @@ export interface DashboardContratista {
     origen: string
     linea: string
     cajasEnviadas: number
-    cajasEnviadasAuditadas: number
+    unidadesEnviadas: number
+    cajasRecibidas: number
+    unidadesRecibidas: number
+    cajasRecibidasAuditadas: number
     cobertura: number
     cajasAuditadas: number
     cajasConDiferencia: number
+    cajasDiferenciaEtiqueta: number
     unidadesEsperadas: number
     unidadesEscaneadas: number
     unidadesFaltantes: number
     unidadesSobrantes: number
+    unidadesDiferenciaEtiqueta: number
     exactitud: number
 }
 
@@ -61,7 +75,10 @@ export interface DashboardCaja {
     cantidadEsperada: number
     cantidadEscaneada: number
     diferencia: number
+    diferenciaEtiqueta: number
     observaciones: string | null
+    fechaEnvio: string | null
+    fechaRecepcion: string | null
     usuarioInicio: string
     fechaInicio: string
     usuarioCierre: string | null
@@ -77,6 +94,8 @@ export interface DashboardPendiente {
     linea: string
     contratista: string | null
     fechaEnvio: string | null
+    fechaRecepcion: string | null
+    unidades: number
     estado: string
 }
 
@@ -116,6 +135,7 @@ export interface AuditoriaCaja {
     diferencia: number
     faltantes: number
     sobrantes: number
+    diferenciaEtiqueta: number
     escaneos: number
     rechazos: number
     observaciones: string | null
@@ -135,6 +155,7 @@ export interface AuditoriaLinea {
     diferencia: number
     faltantes: number
     sobrantes: number
+    diferenciaEtiqueta: number
     escaneos: number
 }
 
@@ -174,6 +195,7 @@ export interface AuditoriaHistorial {
     cantidadEscaneada: number
     faltantes: number
     sobrantes: number
+    diferenciaEtiqueta: number
     comentario: string | null
     usuario: string
     fecha: string

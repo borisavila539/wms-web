@@ -28,8 +28,9 @@ export const AuditoriaInternaApi = {
     getPorDia: (fechaIni: string, fechaFin: string) =>
         api.get<DashboardDia[]>('DashboardPorDia', { params: { fechaIni, fechaFin } }),
 
-    getCajas: (fechaIni: string, fechaFin: string) =>
-        api.get<DashboardCaja[]>('DashboardCajas', { params: { fechaIni, fechaFin } }),
+    // RECEPCION: cajas recibidas en el periodo (cuadra con el resumen); AUDITORIA: auditadas en el periodo
+    getCajas: (fechaIni: string, fechaFin: string, porFecha: 'RECEPCION' | 'AUDITORIA' = 'RECEPCION') =>
+        api.get<DashboardCaja[]>('DashboardCajas', { params: { fechaIni, fechaFin, porFecha } }),
 
     getPendientes: (fechaIni: string, fechaFin: string) =>
         api.get<DashboardPendiente[]>('DashboardPendientes', { params: { fechaIni, fechaFin } }),
@@ -57,4 +58,8 @@ export const AuditoriaInternaApi = {
     // Borra escaneos y rechazos; la caja queda abierta en 0 (mismo permiso que reabrir)
     reiniciarCaja: (auditoriaId: number, motivo: string, usuario: string) =>
         api.post<AuditoriaRespuesta>('ReiniciarCaja', { auditoriaId, motivo, usuario }),
+
+    // Borra la auditoria completa (queda en la bitacora); la caja vuelve a quedar pendiente (mismo permiso)
+    eliminarCaja: (auditoriaId: number, motivo: string, usuario: string) =>
+        api.post<AuditoriaRespuesta>('EliminarCaja', { auditoriaId, motivo, usuario }),
 }

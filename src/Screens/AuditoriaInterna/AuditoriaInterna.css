@@ -97,17 +97,56 @@
 }
 
 .ai-num--alerta { color: var(--ai-alerta) !important; font-weight: 700; }
+/* Diferencia de etiquetas: no es faltante ni sobrante, se marca en ambar */
+.ai-num--aviso { color: #b45309 !important; font-weight: 700; }
+
+.ai-aviso-etiqueta {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-left: 4px solid #d97706;
+  border-radius: 8px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 13px;
+  line-height: 1.45;
+}
 
 /* ===================== PANELES ===================== */
+/* Resumen por linea a todo el ancho (9 columnas) y la grafica debajo */
 .ai-paneles {
   display: grid;
-  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.5fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
+}
+.ai-paneles > .ai-panel:not(.ai-panel--grafica) { order: -1; }
+
+/* Unidades debajo del numero de cajas */
+.ai-uds {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--ai-texto-3);
 }
 
 @media (max-width: 1100px) {
   .ai-paneles { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Enlace "N pendientes" debajo de la cobertura: abre la lista filtrada a esa linea */
+.ai-link-pendientes {
+  display: block;
+  margin-top: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 11px;
+  color: var(--ai-serie);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.ai-link-pendientes:hover { color: var(--ai-serie-activa); }
+.ai-link-pendientes:focus-visible { outline: 2px solid var(--ai-serie); outline-offset: 2px; }
 
 .ai-panel {
   background: #ffffff;

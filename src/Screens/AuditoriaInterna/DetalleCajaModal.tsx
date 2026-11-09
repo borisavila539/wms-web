@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { RotateCcw, Eraser } from 'lucide-react'
+import { RotateCcw, Eraser, Trash2 } from 'lucide-react'
 import { AuditoriaInternaApi } from '../../api/AuditoriaInternaApi'
 import { AuditoriaCajaDetalle, AuditoriaEscaneo, AuditoriaFaltante, AuditoriaHistorial } from '../../interfaces/AuditoriaInterna/AuditoriaInternaInterface'
 import { IcoX, Spinner } from '../../Components/icons'
@@ -9,12 +9,12 @@ interface Props {
     usuario: string
     puedeReabrir: boolean
     onCerrar: () => void
-    // Se llama despues de reabrir o reiniciar para refrescar el dashboard
+    // Se llama despues de reabrir, reiniciar o eliminar para refrescar el dashboard
     onCambio: () => void
 }
 
 type Pestana = 'tallas' | 'escaneos' | 'faltantes' | 'historial'
-type Accion = 'reabrir' | 'reiniciar'
+type Accion = 'reabrir' | 'reiniciar' | 'eliminar'
 
 const TEXTO_ACCION: Record<Accion, { label: string; placeholder: string; nota: string; confirmar: string; procesando: string; error: string }> = {
     reabrir: {
@@ -32,6 +32,14 @@ const TEXTO_ACCION: Record<Accion, { label: string; placeholder: string; nota: s
         confirmar: 'Confirmar reinicio',
         procesando: 'Reiniciando…',
         error: 'Error al reiniciar la caja.',
+    },
+    eliminar: {
+        label: 'Motivo de la eliminación (obligatorio)',
+        placeholder: 'Ej. Caja auditada por error, no corresponde a esta OP.',
+        nota: 'Se borra la auditoría completa (escaneos, rechazos e historial). La caja vuelve a quedar pendiente y al escanearla se audita desde cero. Queda registrado quién la eliminó y por qué.',
+        confirmar: 'Confirmar eliminación',
+        procesando: 'Eliminando…',
+        error: 'Error al eliminar la caja.',
     },
 }
 
@@ -55,6 +63,8 @@ export const etiquetaResultado = (estado: string, resultado: string | null) => {
         case 'FALTANTE': return { texto: 'Faltante', clase: 'faltante' }
         case 'SOBRANTE': return { texto: 'Sobrante', clase: 'sobrante' }
         case 'MIXTO': return { texto: 'Faltante y sobrante', clase: 'faltante' }
+        // Unidades completas; solo hay prendas con otra etiqueta en la misma talla
+        case 'ETIQUETAS': return { texto: 'Completa · dif. etiquetas', clase: 'sobrante' }
         default: return { texto: resultado ?? '', clase: 'proceso' }
     }
 }
@@ -100,14 +110,22 @@ export const DetalleCajaModal: React.FC<Props> = ({ auditoriaId, usuario, puedeR
     const handleConfirmar = async () => {
         if (!accion) return
         if (!motivo.trim()) {
-            setError(`Escriba el motivo ${accion === 'reabrir' ? 'de la reapertura' : 'del reinicio'}.`)
+            setError(TEXTO_ACCION[accion].label.replace(' (obligatorio)', '') + ': escriba el motivo.')
             return
         }
         setGuardando(true)
         setError(null)
         try {
-            const llamada = accion === 'reabrir' ? AuditoriaInternaApi.reabrirCaja : AuditoriaInternaApi.reiniciarCaja
+            const llamada = accion === 'reabrir' ? AuditoriaInternaApi.reabrirCaja
+                : accion === 'reiniciar' ? AuditoriaInternaApi.reiniciarCaja
+                    : AuditoriaInternaApi.eliminarCaja
             const resp = await llamada(auditoriaId, motivo.trim(), usuario)
+            if (resp.data.exito && accion === 'eliminar') {
+                // La auditoria ya no existe: se refresca el dashboard y se cierra el detalle
+                onCambio()
+                onCerrar()
+                return
+            }
             if (resp.data.exito) {
                 setExito(resp.data.mensaje)
                 setAccion(null)
@@ -161,7 +179,7 @@ export const DetalleCajaModal: React.FC<Props> = ({ auditoriaId, usuario, puedeR
                     {error && <div className="alert-box alert-error">{error}</div>}
                     {exito && <div className="alert-box alert-success">{exito}</div>}
 
-                    {/* Reabrir (solo cerradas) y reiniciar (abiertas o cerradas): solo usuarios con permiso */}
+                    {/* Reabrir (solo cerradas), reiniciar y eliminar (abiertas o cerradas): solo usuarios con permiso */}
                     {caja && puedeReabrir && (
                         <div className="ai-reabrir">
                             {!accion ? (
@@ -176,9 +194,13 @@ export const DetalleCajaModal: React.FC<Props> = ({ auditoriaId, usuario, puedeR
                                         <Eraser size={15} />
                                         <span>Reiniciar caja</span>
                                     </button>
+                                    <button className="gen-btn-outline ai-btn-peligro" onClick={() => iniciarAccion('eliminar')}>
+                                        <Trash2 size={15} />
+                                        <span>Eliminar caja</span>
+                                    </button>
                                 </div>
                             ) : (
-                                <div className={`ai-reabrir__form ${accion === 'reiniciar' ? 'ai-reabrir__form--peligro' : ''}`}>
+                                <div className={`ai-reabrir__form ${accion !== 'reabrir' ? 'ai-reabrir__form--peligro' : ''}`}>
                                     <label htmlFor="ai-motivo">{TEXTO_ACCION[accion].label}</label>
                                     <textarea
                                         id="ai-motivo"
@@ -195,9 +217,9 @@ export const DetalleCajaModal: React.FC<Props> = ({ auditoriaId, usuario, puedeR
                                             : TEXTO_ACCION[accion].nota}
                                     </span>
                                     <div className="ai-reabrir__botones">
-                                        <button className={`gen-btn-submit ${accion === 'reiniciar' ? 'ai-btn-peligro--solido' : ''}`}
+                                        <button className={`gen-btn-submit ${accion !== 'reabrir' ? 'ai-btn-peligro--solido' : ''}`}
                                             onClick={handleConfirmar} disabled={guardando || !motivo.trim()}>
-                                            {guardando ? <Spinner size={15} /> : accion === 'reabrir' ? <RotateCcw size={15} /> : <Eraser size={15} />}
+                                            {guardando ? <Spinner size={15} /> : accion === 'reabrir' ? <RotateCcw size={15} /> : accion === 'reiniciar' ? <Eraser size={15} /> : <Trash2 size={15} />}
                                             <span>{guardando ? TEXTO_ACCION[accion].procesando : TEXTO_ACCION[accion].confirmar}</span>
                                         </button>
                                         <button className="gen-btn-outline" onClick={() => { setAccion(null); setMotivo('') }} disabled={guardando}>
@@ -230,11 +252,22 @@ export const DetalleCajaModal: React.FC<Props> = ({ auditoriaId, usuario, puedeR
                                 {dato('Observaciones', caja.observaciones)}
                             </div>
 
+                            {caja.diferenciaEtiqueta > 0 && (
+                                <div className="ai-aviso-etiqueta">
+                                    <b>{caja.diferenciaEtiqueta} {caja.diferenciaEtiqueta === 1 ? 'prenda trae' : 'prendas traen'} una etiqueta distinta a la registrada en empaque.</b>
+                                    {' '}Es la misma talla: faltan seriales registrados y aparecieron otros que no están registrados en ninguna caja.
+                                    Las unidades sí están; es un error de etiquetado o de registro en el empaque.
+                                </div>
+                            )}
+
                             <div className="ai-totales">
                                 <div><span>Esperado</span><b>{caja.cantidadEsperada}</b></div>
                                 <div><span>Escaneado</span><b>{caja.cantidadEscaneada}</b></div>
                                 <div><span>Faltantes</span><b className={caja.faltantes > 0 ? 'ai-num--alerta' : ''}>{caja.faltantes}</b></div>
                                 <div><span>Sobrantes</span><b className={caja.sobrantes > 0 ? 'ai-num--alerta' : ''}>{caja.sobrantes}</b></div>
+                                <div title="Prendas de la misma talla con una etiqueta distinta a la registrada en empaque. No cuentan como faltante ni sobrante.">
+                                    <span>Dif. etiquetas</span><b className={caja.diferenciaEtiqueta > 0 ? 'ai-num--aviso' : ''}>{caja.diferenciaEtiqueta}</b>
+                                </div>
                                 <div><span>Rechazos</span><b>{caja.rechazos}</b></div>
                             </div>
 
@@ -254,7 +287,7 @@ export const DetalleCajaModal: React.FC<Props> = ({ auditoriaId, usuario, puedeR
                             <div className="ai-tabla-wrapper">
                                 {pestana === 'tallas' && (
                                     <table className="gen-data-table">
-                                        <thead><tr><th>Talla</th><th>EAN</th><th className="ai-num">Esperado</th><th className="ai-num">Escaneado</th><th className="ai-num">Faltantes</th><th className="ai-num">Sobrantes</th></tr></thead>
+                                        <thead><tr><th>Talla</th><th>EAN</th><th className="ai-num">Esperado</th><th className="ai-num">Escaneado</th><th className="ai-num">Faltantes</th><th className="ai-num">Sobrantes</th><th className="ai-num">Dif. etiquetas</th></tr></thead>
                                         <tbody>
                                             {detalle?.lineas.map(l => (
                                                 <tr key={l.id}>
@@ -262,6 +295,7 @@ export const DetalleCajaModal: React.FC<Props> = ({ auditoriaId, usuario, puedeR
                                                     <td className="ai-num">{l.cantidadEsperada}</td><td className="ai-num">{l.cantidadEscaneada}</td>
                                                     <td className={`ai-num ${l.faltantes > 0 ? 'ai-num--alerta' : ''}`}>{l.faltantes}</td>
                                                     <td className={`ai-num ${l.sobrantes > 0 ? 'ai-num--alerta' : ''}`}>{l.sobrantes}</td>
+                                                    <td className={`ai-num ${l.diferenciaEtiqueta > 0 ? 'ai-num--aviso' : ''}`}>{l.diferenciaEtiqueta}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -313,9 +347,9 @@ export const DetalleCajaModal: React.FC<Props> = ({ auditoriaId, usuario, puedeR
 
                                 {pestana === 'historial' && (
                                     <table className="gen-data-table">
-                                        <thead><tr><th>Fecha</th><th>Acción</th><th>Resultado</th><th className="ai-num">Escaneado</th><th className="ai-num">Faltantes</th><th className="ai-num">Sobrantes</th><th>Motivo / observaciones</th><th>Usuario</th></tr></thead>
+                                        <thead><tr><th>Fecha</th><th>Acción</th><th>Resultado</th><th className="ai-num">Escaneado</th><th className="ai-num">Faltantes</th><th className="ai-num">Sobrantes</th><th className="ai-num">Dif. etiq.</th><th>Motivo / observaciones</th><th>Usuario</th></tr></thead>
                                         <tbody>
-                                            {historial.length === 0 && <tr><td colSpan={8} className="ai-sin-dato">Sin cierres, reaperturas ni reinicios.</td></tr>}
+                                            {historial.length === 0 && <tr><td colSpan={9} className="ai-sin-dato">Sin cierres, reaperturas ni reinicios.</td></tr>}
                                             {historial.map(h => {
                                                 const r = etiquetaResultado('CERRADA', h.resultado)
                                                 const a = ETIQUETA_HISTORIAL[h.accion] ?? { texto: h.accion, clase: 'proceso' }
@@ -327,6 +361,7 @@ export const DetalleCajaModal: React.FC<Props> = ({ auditoriaId, usuario, puedeR
                                                         <td className="ai-num">{h.cantidadEscaneada} / {h.cantidadEsperada}</td>
                                                         <td className={`ai-num ${h.faltantes > 0 ? 'ai-num--alerta' : ''}`}>{h.faltantes}</td>
                                                         <td className={`ai-num ${h.sobrantes > 0 ? 'ai-num--alerta' : ''}`}>{h.sobrantes}</td>
+                                                        <td className="ai-num">{h.diferenciaEtiqueta ?? 0}</td>
                                                         <td>{h.comentario ?? ''}</td>
                                                         <td>{h.usuario}</td>
                                                     </tr>

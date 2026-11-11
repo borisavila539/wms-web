@@ -311,9 +311,16 @@ export const DetalleCajaModal: React.FC<Props> = ({ auditoriaId, usuario, puedeR
                                                 <tr key={`${e.tipo}-${e.id}`}>
                                                     <td>{formatearFechaHora(e.fecha)}</td>
                                                     <td>
-                                                        <span className={`ai-badge ai-badge--${e.tipo === 'ACEPTADO' ? (e.esSobrante ? 'sobrante' : 'completa') : 'rechazo'}`}>
-                                                            {e.tipo === 'ACEPTADO' ? (e.esSobrante ? 'Sobrante' : 'Aceptado') : e.tipo.replace(/_/g, ' ').toLowerCase()}
-                                                        </span>
+                                                        {/* Aceptada con excepcion: registrada en empaque en otra caja de la misma OP */}
+                                                        {e.tipo === 'OTRA_CAJA' ? (
+                                                            <span className="ai-badge ai-badge--sobrante" title="Registrada en empaque en otra caja de la misma OP">
+                                                                De otra caja
+                                                            </span>
+                                                        ) : (
+                                                            <span className={`ai-badge ai-badge--${e.tipo === 'ACEPTADO' ? (e.esSobrante ? 'sobrante' : 'completa') : 'rechazo'}`}>
+                                                                {e.tipo === 'ACEPTADO' ? (e.esSobrante ? 'Sobrante' : 'Aceptado') : e.tipo.replace(/_/g, ' ').toLowerCase()}
+                                                            </span>
+                                                        )}
                                                     </td>
                                                     <td>{e.talla ?? ''}</td>
                                                     <td>{e.serial ?? ''}</td>

@@ -25,6 +25,21 @@ const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', '
 type Vista = 'historial' | 'pendientes'
 type PorFecha = 'RECEPCION' | 'AUDITORIA'
 
+// Filtro por estado: cajas auditadas por resultado (ABIERTA = en proceso); pendientes por su estado
+const ESTADOS_HISTORIAL: [string, string][] = [
+    ['ABIERTA', 'En proceso'],
+    ['COMPLETA', 'Completa'],
+    ['ETIQUETAS', 'Completa · dif. etiquetas'],
+    ['FALTANTE', 'Faltante'],
+    ['SOBRANTE', 'Sobrante'],
+    ['MIXTO', 'Faltante y sobrante'],
+]
+const ESTADOS_PENDIENTES: [string, string][] = [
+    ['SIN AUDITAR', 'Sin auditar'],
+    ['EN PROCESO', 'En proceso'],
+]
+const estadoCaja = (c: DashboardCaja) => c.estado === 'ABIERTA' ? 'ABIERTA' : (c.resultado ?? '')
+
 // Fecha sin hora (las recepciones de AX no traen hora)
 const formatearFecha = (valor: string | null) => {
     if (!valor) return ''
@@ -97,6 +112,8 @@ const AuditoriaInternaDashboardScreen = () => {
     const [categoria, setCategoria] = useState('')
     // Filtro por linea de la tabla de abajo ('' = todas); se pone desde el resumen por linea
     const [linea, setLinea] = useState('')
+    // Estado de la tabla de abajo ('' = todos); depende de la vista
+    const [estado, setEstado] = useState('')
     const barraTabla = useRef<HTMLDivElement>(null)
     const [paginaActual, setPaginaActual] = useState(1)
     const [cajaDetalle, setCajaDetalle] = useState<number | null>(null)
@@ -164,6 +181,7 @@ const AuditoriaInternaDashboardScreen = () => {
     // Desde el resumen por linea: muestra las cajas recibidas de esa linea que faltan por auditar
     const verPendientesLinea = (l: string) => {
         setLinea(l)
+        setEstado('')
         setBusqueda('')
         setVista('pendientes')
         setPaginaActual(1)
@@ -195,7 +213,8 @@ const AuditoriaInternaDashboardScreen = () => {
     // Lineas del periodo (mismo orden que el resumen por linea)
     const lineas = useMemo(() => contratistas.map(c => c.linea), [contratistas])
 
-    const cajasFiltradas = useMemo(() => {
+    // Con todos los filtros menos el estado (asi el selector de estado muestra cuantas hay de cada uno)
+    const cajasSinEstado = useMemo(() => {
         const q = busqueda.trim().toLowerCase()
         return cajas.filter(c => {
             if (categoria && (c.categoriaInterna || 'Sin categoría') !== categoria) return false
@@ -206,7 +225,12 @@ const AuditoriaInternaDashboardScreen = () => {
         })
     }, [cajas, busqueda, categoria, linea])
 
-    const pendientesFiltrados = useMemo(() => {
+    const cajasFiltradas = useMemo(
+        () => estado ? cajasSinEstado.filter(c => estadoCaja(c) === estado) : cajasSinEstado,
+        [cajasSinEstado, estado]
+    )
+
+    const pendientesSinEstado = useMemo(() => {
         const q = busqueda.trim().toLowerCase()
         return pendientes.filter(p => {
             if (linea && p.linea !== linea) return false
@@ -214,6 +238,20 @@ const AuditoriaInternaDashboardScreen = () => {
             return [p.op, p.numeroCaja, p.linea, p.contratista, p.origen, p.estado].join(' ').toLowerCase().includes(q)
         })
     }, [pendientes, busqueda, linea])
+
+    const pendientesFiltrados = useMemo(
+        () => estado ? pendientesSinEstado.filter(p => p.estado === estado) : pendientesSinEstado,
+        [pendientesSinEstado, estado]
+    )
+
+    // Opciones del selector de estado con su conteo (segun la vista)
+    const opcionesEstado = useMemo(() => {
+        const lista = vista === 'historial' ? ESTADOS_HISTORIAL : ESTADOS_PENDIENTES
+        const conteo = (clave: string) => vista === 'historial'
+            ? cajasSinEstado.filter(c => estadoCaja(c) === clave).length
+            : pendientesSinEstado.filter(p => p.estado === clave).length
+        return lista.map(([clave, texto]) => ({ clave, texto, n: conteo(clave) }))
+    }, [vista, cajasSinEstado, pendientesSinEstado])
 
     const datosVista: any[] = vista === 'historial' ? cajasFiltradas : pendientesFiltrados
     const totalPaginas = Math.max(1, Math.ceil(datosVista.length / FILAS_POR_PAGINA))
@@ -480,7 +518,7 @@ const AuditoriaInternaDashboardScreen = () => {
                         ] as [Vista, string][]).map(([valor, texto]) => (
                             <button key={valor} role="tab" aria-selected={vista === valor}
                                 className={vista === valor ? 'ai-segmentado--activo' : ''}
-                                onClick={() => { setVista(valor); setPaginaActual(1) }}>{texto}</button>
+                                onClick={() => { setVista(valor); setEstado(''); setPaginaActual(1) }}>{texto}</button>
                         ))}
                     </div>
                     {vista === 'historial' && (
@@ -515,6 +553,15 @@ const AuditoriaInternaDashboardScreen = () => {
                         <option value="">Todas las líneas</option>
                         {linea && !lineas.includes(linea) && <option value={linea}>{linea}</option>}
                         {lineas.map(l => <option key={l} value={l}>{l}</option>)}
+                    </select>
+                    <select
+                        className="ai-select-categoria"
+                        aria-label="Estado"
+                        value={estado}
+                        onChange={e => { setEstado(e.target.value); setPaginaActual(1) }}
+                    >
+                        <option value="">Todos los estados</option>
+                        {opcionesEstado.map(o => <option key={o.clave} value={o.clave}>{o.texto} ({numero(o.n)})</option>)}
                     </select>
                     {vista === 'pendientes' && pendientes.length >= 5000 && (
                         <span className="ai-nota-limite">Se muestran las 5,000 más recientes; reduzca el periodo para ver todas.</span>

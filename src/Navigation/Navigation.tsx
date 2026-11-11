@@ -20,6 +20,8 @@ import { DespachoImport } from '../Screens/GenerarDespachoPorPantilla/DespachoIm
 import ConsultaDespacho from '../Screens/ConsultarDespacho/ConsultaDespacho';
 import RecepcionFacturasCDScreen from '../Screens/RecepcionFacturasCD/RecepcionFacturasCDScreen';
 import AuditoriaInternaDashboardScreen from '../Screens/AuditoriaInterna/AuditoriaInternaDashboardScreen';
+import ComparativoMBAXScreen from '../Screens/MB/ComparativoMBAXScreen';
+import LiberarCajasMBScreen from '../Screens/MB/LiberarCajasMBScreen';
 
 export const Navigation = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -190,6 +192,24 @@ export const Navigation = () => {
                             Auditoría Interna de Cajas
                         </Link>
                     </li>
+                    <li>
+                        <Link
+                            to="ComparativoMBAX"
+                            onClick={toggleSidebar}
+                            className={location.pathname === '/Menu/ComparativoMBAX' ? 'active' : ''}
+                        >
+                            Comparativo MB vs AX
+                        </Link>
+                    </li>
+                    <li>
+                        <Link
+                            to="LiberarCajasMB"
+                            onClick={toggleSidebar}
+                            className={location.pathname === '/Menu/LiberarCajasMB' ? 'active' : ''}
+                        >
+                            Liberar Cajas Despacho MB
+                        </Link>
+                    </li>
                 </ul>
             </div>
 
@@ -216,6 +236,8 @@ export const Navigation = () => {
                     <Route path='ConsultaDespacho' element = {<ConsultaDespacho/>}/>
                     <Route path='RecepcionFacturasCD' element={<RecepcionFacturasCDScreen />} />
                     <Route path='AuditoriaInterna' element={<AuditoriaInternaDashboardScreen />} />
+                    <Route path='ComparativoMBAX' element={<ComparativoMBAXScreen />} />
+                    <Route path='LiberarCajasMB' element={<LiberarCajasMBScreen />} />
                 </Routes>
             </div>
         </div>
